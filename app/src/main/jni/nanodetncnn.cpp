@@ -37,8 +37,20 @@
 #include <arm_neon.h>
 #endif // __ARM_NEON
 
-static int draw_unsupported(cv::Mat& rgb)
-{
+JNIEnv *ncnn_env;
+jobject ncnn_thiz;
+jmethodID ncnn_callback;
+
+static jstring string2jstring(JNIEnv *env, const char *pat) {
+    jclass strClass = env->FindClass("java/lang/String");
+    jmethodID ctorID = env->GetMethodID(strClass, "<init>", "([BLjava/lang/String;)V");
+    jbyteArray bytes = env->NewByteArray((jsize) strlen(pat));
+    env->SetByteArrayRegion(bytes, 0, (jsize) strlen(pat), (jbyte *) pat);
+    jstring encoding = env->NewStringUTF("utf-8");
+    return (jstring) env->NewObject(strClass, ctorID, bytes, encoding);
+}
+
+static int draw_unsupported(cv::Mat &rgb) {
     const char text[] = "unsupported";
 
     int baseLine = 0;
@@ -47,8 +59,9 @@ static int draw_unsupported(cv::Mat& rgb)
     int y = (rgb.rows - label_size.height) / 2;
     int x = (rgb.cols - label_size.width) / 2;
 
-    cv::rectangle(rgb, cv::Rect(cv::Point(x, y), cv::Size(label_size.width, label_size.height + baseLine)),
-                    cv::Scalar(255, 255, 255), -1);
+    cv::rectangle(rgb, cv::Rect(cv::Point(x, y),
+                                cv::Size(label_size.width, label_size.height + baseLine)),
+                  cv::Scalar(255, 255, 255), -1);
 
     cv::putText(rgb, text, cv::Point(x, y + label_size.height),
                 cv::FONT_HERSHEY_SIMPLEX, 1.0, cv::Scalar(0, 0, 0));
@@ -56,8 +69,7 @@ static int draw_unsupported(cv::Mat& rgb)
     return 0;
 }
 
-static int draw_fps(cv::Mat& rgb)
-{
+static int draw_fps(cv::Mat &rgb) {
     // resolve moving average
     float avg_fps = 0.f;
     {
@@ -65,8 +77,7 @@ static int draw_fps(cv::Mat& rgb)
         static float fps_history[10] = {0.f};
 
         double t1 = ncnn::get_current_time();
-        if (t0 == 0.f)
-        {
+        if (t0 == 0.f) {
             t0 = t1;
             return 0;
         }
@@ -74,19 +85,16 @@ static int draw_fps(cv::Mat& rgb)
         float fps = 1000.f / (t1 - t0);
         t0 = t1;
 
-        for (int i = 9; i >= 1; i--)
-        {
+        for (int i = 9; i >= 1; i--) {
             fps_history[i] = fps_history[i - 1];
         }
         fps_history[0] = fps;
 
-        if (fps_history[9] == 0.f)
-        {
+        if (fps_history[9] == 0.f) {
             return 0;
         }
 
-        for (int i = 0; i < 10; i++)
-        {
+        for (int i = 0; i < 10; i++) {
             avg_fps += fps_history[i];
         }
         avg_fps /= 10.f;
@@ -101,8 +109,9 @@ static int draw_fps(cv::Mat& rgb)
     int y = 0;
     int x = rgb.cols - label_size.width;
 
-    cv::rectangle(rgb, cv::Rect(cv::Point(x, y), cv::Size(label_size.width, label_size.height + baseLine)),
-                    cv::Scalar(255, 255, 255), -1);
+    cv::rectangle(rgb, cv::Rect(cv::Point(x, y),
+                                cv::Size(label_size.width, label_size.height + baseLine)),
+                  cv::Scalar(255, 255, 255), -1);
 
     cv::putText(rgb, text, cv::Point(x, y + label_size.height),
                 cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 0));
@@ -110,30 +119,48 @@ static int draw_fps(cv::Mat& rgb)
     return 0;
 }
 
-static NanoDet* g_nanodet = 0;
+static NanoDet *g_nanodet = 0;
 static ncnn::Mutex lock;
 
-class MyNdkCamera : public NdkCameraWindow
-{
+class MyNdkCamera : public NdkCameraWindow {
 public:
-    virtual void on_image_render(cv::Mat& rgb) const;
+    virtual void on_image_render(cv::Mat &rgb) const;
 };
 
-void MyNdkCamera::on_image_render(cv::Mat& rgb) const
-{
+static const char* class_names[] = {
+        "person", "bicycle", "car", "motorcycle", "airplane", "bus", "train", "truck", "boat", "traffic light",
+        "fire hydrant", "stop sign", "parking meter", "bench", "bird", "cat", "dog", "horse", "sheep", "cow",
+        "elephant", "bear", "zebra", "giraffe", "backpack", "umbrella", "handbag", "tie", "suitcase", "frisbee",
+        "skis", "snowboard", "sports ball", "kite", "baseball bat", "baseball glove", "skateboard", "surfboard",
+        "tennis racket", "bottle", "wine glass", "cup", "fork", "knife", "spoon", "bowl", "banana", "apple",
+        "sandwich", "orange", "broccoli", "carrot", "hot dog", "pizza", "donut", "cake", "chair", "couch",
+        "potted plant", "bed", "dining table", "toilet", "tv", "laptop", "mouse", "remote", "keyboard", "cell phone",
+        "microwave", "oven", "toaster", "sink", "refrigerator", "book", "clock", "vase", "scissors", "teddy bear",
+        "hair drier", "toothbrush"
+};
+
+void MyNdkCamera::on_image_render(cv::Mat &rgb) const {
     // nanodet
     {
         ncnn::MutexLockGuard g(lock);
 
-        if (g_nanodet)
-        {
+        if (g_nanodet) {
             std::vector<Object> objects;
+
             g_nanodet->detect(rgb, objects);
 
             g_nanodet->draw(rgb, objects);
-        }
-        else
-        {
+
+            char str[512] = {0};
+
+            for (auto &object : objects) {
+                strcat(str, class_names[object.label]);
+            }
+            jstring js = string2jstring(ncnn_env, str);
+            ncnn_env->CallVoidMethod(ncnn_thiz, ncnn_callback, js);
+            return;
+
+        } else {
             draw_unsupported(rgb);
         }
     }
@@ -141,12 +168,11 @@ void MyNdkCamera::on_image_render(cv::Mat& rgb) const
     draw_fps(rgb);
 }
 
-static MyNdkCamera* g_camera = 0;
+static MyNdkCamera *g_camera = 0;
 
 extern "C" {
 
-JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void* reserved)
-{
+JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *reserved) {
     __android_log_print(ANDROID_LOG_DEBUG, "ncnn", "JNI_OnLoad");
 
     g_camera = new MyNdkCamera;
@@ -154,8 +180,7 @@ JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void* reserved)
     return JNI_VERSION_1_4;
 }
 
-JNIEXPORT void JNI_OnUnload(JavaVM* vm, void* reserved)
-{
+JNIEXPORT void JNI_OnUnload(JavaVM *vm, void *reserved) {
     __android_log_print(ANDROID_LOG_DEBUG, "ncnn", "JNI_OnUnload");
 
     {
@@ -170,80 +195,78 @@ JNIEXPORT void JNI_OnUnload(JavaVM* vm, void* reserved)
 }
 
 // public native boolean loadModel(AssetManager mgr, int modelid, int cpugpu);
-JNIEXPORT jboolean JNICALL Java_com_tencent_nanodetncnn_NanoDetNcnn_loadModel(JNIEnv* env, jobject thiz, jobject assetManager, jint modelid, jint cpugpu)
-{
-    if (modelid < 0 || modelid > 6 || cpugpu < 0 || cpugpu > 1)
-    {
+JNIEXPORT jboolean JNICALL
+Java_com_tencent_nanodetncnn_NanoDetNcnn_loadModel(JNIEnv *env, jobject thiz, jobject assetManager,
+                                                   jint modelid, jint cpugpu) {
+    if (modelid < 0 || modelid > 6 || cpugpu < 0 || cpugpu > 1) {
         return JNI_FALSE;
     }
 
-    AAssetManager* mgr = AAssetManager_fromJava(env, assetManager);
+    AAssetManager *mgr = AAssetManager_fromJava(env, assetManager);
 
     __android_log_print(ANDROID_LOG_DEBUG, "ncnn", "loadModel %p", mgr);
 
-    const char* modeltypes[] =
-    {
-        "m",
-        "m-416",
-        "g",
-        "ELite0_320",
-        "ELite1_416",
-        "ELite2_512",
-        "RepVGG-A0_416"
-    };
+    const char *modeltypes[] =
+            {
+                    "m",
+                    "m-416",
+                    "g",
+                    "ELite0_320",
+                    "ELite1_416",
+                    "ELite2_512",
+                    "RepVGG-A0_416"
+            };
 
     const int target_sizes[] =
-    {
-        320,
-        416,
-        416,
-        320,
-        416,
-        512,
-        416
-    };
+            {
+                    320,
+                    416,
+                    416,
+                    320,
+                    416,
+                    512,
+                    416
+            };
 
     const float mean_vals[][3] =
-    {
-        {103.53f, 116.28f, 123.675f},
-        {103.53f, 116.28f, 123.675f},
-        {103.53f, 116.28f, 123.675f},
-        {127.f, 127.f, 127.f},
-        {127.f, 127.f, 127.f},
-        {127.f, 127.f, 127.f},
-        {103.53f, 116.28f, 123.675f}
-    };
+            {
+                    {103.53f, 116.28f, 123.675f},
+                    {103.53f, 116.28f, 123.675f},
+                    {103.53f, 116.28f, 123.675f},
+                    {127.f,   127.f,   127.f},
+                    {127.f,   127.f,   127.f},
+                    {127.f,   127.f,   127.f},
+                    {103.53f, 116.28f, 123.675f}
+            };
 
     const float norm_vals[][3] =
-    {
-        {1.f / 57.375f, 1.f / 57.12f, 1.f / 58.395f},
-        {1.f / 57.375f, 1.f / 57.12f, 1.f / 58.395f},
-        {1.f / 57.375f, 1.f / 57.12f, 1.f / 58.395f},
-        {1.f / 128.f, 1.f / 128.f, 1.f / 128.f},
-        {1.f / 128.f, 1.f / 128.f, 1.f / 128.f},
-        {1.f / 128.f, 1.f / 128.f, 1.f / 128.f},
-        {1.f / 57.375f, 1.f / 57.12f, 1.f / 58.395f}
-    };
+            {
+                    {1.f / 57.375f, 1.f / 57.12f, 1.f / 58.395f},
+                    {1.f / 57.375f, 1.f / 57.12f, 1.f / 58.395f},
+                    {1.f / 57.375f, 1.f / 57.12f, 1.f / 58.395f},
+                    {1.f / 128.f,   1.f / 128.f,  1.f / 128.f},
+                    {1.f / 128.f,   1.f / 128.f,  1.f / 128.f},
+                    {1.f / 128.f,   1.f / 128.f,  1.f / 128.f},
+                    {1.f / 57.375f, 1.f / 57.12f, 1.f / 58.395f}
+            };
 
-    const char* modeltype = modeltypes[(int)modelid];
-    int target_size = target_sizes[(int)modelid];
-    bool use_gpu = (int)cpugpu == 1;
+    const char *modeltype = modeltypes[(int) modelid];
+    int target_size = target_sizes[(int) modelid];
+    bool use_gpu = (int) cpugpu == 1;
 
     // reload
     {
         ncnn::MutexLockGuard g(lock);
 
-        if (use_gpu && ncnn::get_gpu_count() == 0)
-        {
+        if (use_gpu && ncnn::get_gpu_count() == 0) {
             // no gpu
             delete g_nanodet;
             g_nanodet = 0;
-        }
-        else
-        {
+        } else {
             if (!g_nanodet)
                 g_nanodet = new NanoDet;
-            g_nanodet->load(mgr, modeltype, target_size, mean_vals[(int)modelid], norm_vals[(int)modelid], use_gpu);
+            g_nanodet->load(mgr, modeltype, target_size, mean_vals[(int) modelid],
+                            norm_vals[(int) modelid], use_gpu);
         }
     }
 
@@ -251,21 +274,21 @@ JNIEXPORT jboolean JNICALL Java_com_tencent_nanodetncnn_NanoDetNcnn_loadModel(JN
 }
 
 // public native boolean openCamera(int facing);
-JNIEXPORT jboolean JNICALL Java_com_tencent_nanodetncnn_NanoDetNcnn_openCamera(JNIEnv* env, jobject thiz, jint facing)
-{
+JNIEXPORT jboolean JNICALL
+Java_com_tencent_nanodetncnn_NanoDetNcnn_openCamera(JNIEnv *env, jobject thiz, jint facing) {
     if (facing < 0 || facing > 1)
         return JNI_FALSE;
 
     __android_log_print(ANDROID_LOG_DEBUG, "ncnn", "openCamera %d", facing);
 
-    g_camera->open((int)facing);
+    g_camera->open((int) facing);
 
     return JNI_TRUE;
 }
 
 // public native boolean closeCamera();
-JNIEXPORT jboolean JNICALL Java_com_tencent_nanodetncnn_NanoDetNcnn_closeCamera(JNIEnv* env, jobject thiz)
-{
+JNIEXPORT jboolean JNICALL
+Java_com_tencent_nanodetncnn_NanoDetNcnn_closeCamera(JNIEnv *env, jobject thiz) {
     __android_log_print(ANDROID_LOG_DEBUG, "ncnn", "closeCamera");
 
     g_camera->close();
@@ -274,14 +297,29 @@ JNIEXPORT jboolean JNICALL Java_com_tencent_nanodetncnn_NanoDetNcnn_closeCamera(
 }
 
 // public native boolean setOutputWindow(Surface surface);
-JNIEXPORT jboolean JNICALL Java_com_tencent_nanodetncnn_NanoDetNcnn_setOutputWindow(JNIEnv* env, jobject thiz, jobject surface)
-{
-    ANativeWindow* win = ANativeWindow_fromSurface(env, surface);
+JNIEXPORT jboolean JNICALL
+Java_com_tencent_nanodetncnn_NanoDetNcnn_setOutputWindow(JNIEnv *env, jobject thiz,
+                                                         jobject surface) {
+    ANativeWindow *win = ANativeWindow_fromSurface(env, surface);
 
     __android_log_print(ANDROID_LOG_DEBUG, "ncnn", "setOutputWindow %p", win);
 
     g_camera->set_window(win);
 
+    return JNI_TRUE;
+}
+
+JNIEXPORT jboolean JNICALL
+Java_com_tencent_nanodetncnn_NanoDetNcnn_initCallback(JNIEnv *env, jobject thiz) {
+    ncnn_env = env;
+    ncnn_thiz = thiz;
+    jclass jclass = env->FindClass("com/tencent/nanodetncnn/NanoDetNcnn");
+    if (jclass == 0) {
+        __android_log_print(ANDROID_LOG_ERROR, "ncnn",
+                            "can not find com/tencent/nanodetncnn/NanoDetNcnn path.");
+        return JNI_FALSE;
+    }
+    ncnn_callback = env->GetMethodID(jclass, "callback", "(Ljava/lang/String;)V");
     return JNI_TRUE;
 }
 

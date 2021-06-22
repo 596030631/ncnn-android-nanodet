@@ -17,12 +17,14 @@ package com.tencent.nanodetncnn;
 import android.content.res.AssetManager;
 import android.view.Surface;
 
-public class NanoDetNcnn
+public abstract class NanoDetNcnn
 {
     public native boolean loadModel(AssetManager mgr, int modelid, int cpugpu);
     public native boolean openCamera(int facing);
     public native boolean closeCamera();
     public native boolean setOutputWindow(Surface surface);
+    public native boolean initCallback();
+    public abstract void callback(String output);
 
     static {
         System.loadLibrary("nanodetncnn");
