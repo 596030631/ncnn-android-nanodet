@@ -17,8 +17,11 @@ package com.tencent.nanodetncnn;
 import android.Manifest;
 import android.app.Activity;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.PixelFormat;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
@@ -28,10 +31,13 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.Spinner;
 
 public class MainActivity extends Activity implements SurfaceHolder.Callback {
     public static final int REQUEST_CAMERA = 100;
+    public static final int REQUEST_READ = 101;
+    private static final String rtspUrl = "rtsp://admin:123456@192.168.31.46/stream0";
 
     private final NanoDetNcnn nanodetncnn = new NanoDetNcnn() {
         @Override
@@ -46,7 +52,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
     private int current_model = 0;
     private int current_cpugpu = 0;
 
-    private SurfaceView cameraView;
+//    private SurfaceView cameraView;
 
     /**
      * Called when the activity is first created.
@@ -58,10 +64,10 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
 
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
-        cameraView = (SurfaceView) findViewById(R.id.cameraview);
+//        cameraView = (SurfaceView) findViewById(R.id.cameraview);
 
-        cameraView.getHolder().setFormat(PixelFormat.RGBA_8888);
-        cameraView.getHolder().addCallback(this);
+//        cameraView.getHolder().setFormat(PixelFormat.RGBA_8888);
+//        cameraView.getHolder().addCallback(this);
 
         Button buttonSwitchCamera = (Button) findViewById(R.id.buttonSwitchCamera);
         buttonSwitchCamera.setOnClickListener(new View.OnClickListener() {
@@ -75,6 +81,33 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
                 nanodetncnn.openCamera(new_facing);
 
                 facing = new_facing;
+            }
+        });
+
+        findViewById(R.id.button_test_image).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        long start = SystemClock.elapsedRealtime();
+//                        final Bitmap b = BitmapFactory.decodeFile("/sdcard/bus.jpg");
+                        final Bitmap b = BitmapFactory.decodeFile("/sdcard/test.jpg");
+//                        final Bitmap b = BitmapFactory.decodeFile("/sdcard/2.jpg");
+                        for (int i = 0; i < 5; i++) {
+                            nanodetncnn.testImage(b);
+                        }
+                        Log.w("MainActivity", String.format("耗时:%dms", (SystemClock.elapsedRealtime() - start) / 5));
+
+//                        runOnUiThread(new Runnable() {
+//                            @Override
+//                            public void run() {
+//                                ImageView img = (ImageView) findViewById(R.id.imageview);
+//                                img.setImageBitmap(b);
+//                            }
+//                        });
+                    }
+                }).start();
             }
         });
 
@@ -138,14 +171,22 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
         if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.CAMERA) == PackageManager.PERMISSION_DENIED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, REQUEST_CAMERA);
         }
+
+        if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_DENIED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, REQUEST_READ);
+        }
         nanodetncnn.initCallback();
-        nanodetncnn.openCamera(facing);
+//        nanodetncnn.openCamera(facing);
+
+//        new Thread(() -> nanodetncnn.open(rtspUrl)).start();
+        new Thread(() -> nanodetncnn.scalingVideo()).start();
+
     }
 
     @Override
     public void onPause() {
         super.onPause();
 
-        nanodetncnn.closeCamera();
+//        nanodetncnn.closeCamera();
     }
 }

@@ -15,16 +15,25 @@
 package com.tencent.nanodetncnn;
 
 import android.content.res.AssetManager;
+import android.graphics.Bitmap;
 import android.view.Surface;
 
 public abstract class NanoDetNcnn
 {
     public native boolean loadModel(AssetManager mgr, int modelid, int cpugpu);
     public native boolean openCamera(int facing);
+    public native boolean testImage(Bitmap bitmap);
     public native boolean closeCamera();
     public native boolean setOutputWindow(Surface surface);
     public native boolean initCallback();
     public abstract void callback(String output);
+
+    public native void open(String url);
+    public native void start(String pathName);
+    public native void stop();
+    public native void close();
+
+    public native void scalingVideo();
 
     static {
         System.loadLibrary("nanodetncnn");
