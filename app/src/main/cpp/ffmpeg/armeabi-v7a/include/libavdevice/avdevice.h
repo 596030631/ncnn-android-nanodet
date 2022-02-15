@@ -206,7 +206,7 @@ enum AVDevToAppMessageType {
      *
      * Device requests to create a window buffer. Exact meaning is device-
      * and application-dependent. Message is sent before rendering first
-     * frame and all one-shot initializations should be done here.
+     * src_frame and all one-shot initializations should be done here.
      * Application is allowed to ignore preferred window buffer size.
      *
      * @note: Application is obligated to inform about window buffer size
@@ -222,7 +222,7 @@ enum AVDevToAppMessageType {
      *
      * Device requests to prepare a window buffer for rendering.
      * Exact meaning is device- and application-dependent.
-     * Message is sent before rendering of each frame.
+     * Message is sent before rendering of each src_frame.
      *
      * data: NULL.
      */
@@ -232,7 +232,7 @@ enum AVDevToAppMessageType {
      * Display window buffer message.
      *
      * Device requests to display a window buffer.
-     * Message is sent when new frame is ready to be displayed.
+     * Message is sent when new src_frame is ready to be displayed.
      * Usually buffers need to be swapped in handler of this message.
      *
      * data: NULL.
@@ -346,7 +346,7 @@ int avdevice_dev_to_app_control_message(struct AVFormatContext *s,
  *                      type: AV_OPT_TYPE_INT (AVPixelFormat value)
  *    - window_size:    supported window sizes (describes size of the window size presented to the user).
  *                      type: AV_OPT_TYPE_IMAGE_SIZE
- *    - frame_size:     supported frame sizes (describes size of provided video frames).
+ *    - frame_size:     supported src_frame sizes (describes size of provided video frames).
  *                      type: AV_OPT_TYPE_IMAGE_SIZE
  *    - fps:            supported fps values
  *                      type: AV_OPT_TYPE_RATIONAL

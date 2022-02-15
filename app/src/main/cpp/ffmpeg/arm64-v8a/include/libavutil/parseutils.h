@@ -69,7 +69,7 @@ int av_parse_video_size(int *width_ptr, int *height_ptr, const char *str);
  * Parse str and store the detected values in *rate.
  *
  * @param[in,out] rate pointer to the AVRational which will contain the detected
- * frame rate
+ * src_frame rate
  * @param[in] str the string to parse: it has to be a string in the format
  * rate_num / rate_den, a float number or a valid video rate abbreviation
  * @return >= 0 on success, a negative error code otherwise

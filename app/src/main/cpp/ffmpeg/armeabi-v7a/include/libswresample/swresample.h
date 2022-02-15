@@ -525,7 +525,7 @@ const char *swresample_license(void);
  *
  * If the output AVFrame does not have the data pointers allocated the nb_samples
  * field will be set using av_frame_get_buffer()
- * is called to allocate the frame.
+ * is called to allocate the src_frame.
  *
  * The output AVFrame can be NULL or have fewer allocated samples than required.
  * In this case, any remaining samples not written to the output will be added

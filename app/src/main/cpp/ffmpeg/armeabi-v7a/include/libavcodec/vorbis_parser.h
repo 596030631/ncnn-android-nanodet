@@ -52,7 +52,7 @@ void av_vorbis_parse_free(AVVorbisParseContext **s);
  * special frames are considered invalid.
  *
  * @param s        Vorbis parser context
- * @param buf      buffer containing a Vorbis frame
+ * @param buf      buffer containing a Vorbis src_frame
  * @param buf_size size of the buffer
  * @param flags    flags for special frames
  */
@@ -63,7 +63,7 @@ int av_vorbis_parse_frame_flags(AVVorbisParseContext *s, const uint8_t *buf,
  * Get the duration for a Vorbis packet.
  *
  * @param s        Vorbis parser context
- * @param buf      buffer containing a Vorbis frame
+ * @param buf      buffer containing a Vorbis src_frame
  * @param buf_size size of the buffer
  */
 int av_vorbis_parse_frame(AVVorbisParseContext *s, const uint8_t *buf,

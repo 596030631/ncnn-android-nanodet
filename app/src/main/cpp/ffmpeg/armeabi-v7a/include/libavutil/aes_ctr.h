@@ -77,7 +77,7 @@ void av_aes_ctr_set_iv(struct AVAESCTR *a, const uint8_t* iv);
 void av_aes_ctr_set_full_iv(struct AVAESCTR *a, const uint8_t* iv);
 
 /**
- * Increment the top 64 bit of the iv (performed after each frame)
+ * Increment the top 64 bit of the iv (performed after each src_frame)
  */
 void av_aes_ctr_increment_iv(struct AVAESCTR *a);
 

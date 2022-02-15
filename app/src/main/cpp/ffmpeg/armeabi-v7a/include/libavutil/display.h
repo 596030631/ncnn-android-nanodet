@@ -55,7 +55,7 @@
  * except for u, v and w, which are stored as 2.30 fixed-point values.
  *
  * The transformation maps a point (p, q) in the source (pre-transformation)
- * frame to the point (p', q') in the destination (post-transformation) frame as
+ * src_frame to the point (p', q') in the destination (post-transformation) src_frame as
  * follows:
  *
  * @code{.unparsed}
@@ -78,7 +78,7 @@
  * Extract the rotation component of the transformation matrix.
  *
  * @param matrix the transformation matrix
- * @return the angle (in degrees) by which the transformation rotates the frame
+ * @return the angle (in degrees) by which the transformation rotates the src_frame
  *         counterclockwise. The angle will be in range [-180.0, 180.0],
  *         or NaN if the matrix is singular.
  *

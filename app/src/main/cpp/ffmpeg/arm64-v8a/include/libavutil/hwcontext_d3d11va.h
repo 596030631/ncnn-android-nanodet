@@ -97,18 +97,18 @@ typedef struct AVD3D11VADeviceContext {
 } AVD3D11VADeviceContext;
 
 /**
- * D3D11 frame descriptor for pool allocation.
+ * D3D11 src_frame descriptor for pool allocation.
  *
  * In user-allocated pools, AVHWFramesContext.pool must return AVBufferRefs
  * with the data pointer pointing at an object of this type describing the
- * planes of the frame.
+ * planes of the src_frame.
  *
  * This has no use outside of custom allocation, and AVFrame AVBufferRef do not
  * necessarily point to an instance of this struct.
  */
 typedef struct AVD3D11FrameDescriptor {
     /**
-     * The texture in which the frame is located. The reference count is
+     * The texture in which the src_frame is located. The reference count is
      * managed by the AVBufferRef, and destroying the reference will release
      * the interface.
      *
@@ -117,7 +117,7 @@ typedef struct AVD3D11FrameDescriptor {
     ID3D11Texture2D *texture;
 
     /**
-     * The index into the array texture element representing the frame, or 0
+     * The index into the array texture element representing the src_frame, or 0
      * if the texture is not an array texture.
      *
      * Normally stored in AVFrame.data[1] (cast from intptr_t).

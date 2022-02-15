@@ -25,7 +25,7 @@
  * @file
  * API-specific header for AV_HWDEVICE_TYPE_VAAPI.
  *
- * Dynamic frame pools are supported, but note that any pool used as a render
+ * Dynamic src_frame pools are supported, but note that any pool used as a render
  * target is required to be of fixed size in order to be be usable as an
  * argument to vaCreateContext().
  *
@@ -81,14 +81,14 @@ typedef struct AVVAAPIDeviceContext {
 } AVVAAPIDeviceContext;
 
 /**
- * VAAPI-specific data associated with a frame pool.
+ * VAAPI-specific data associated with a src_frame pool.
  *
  * Allocated as AVHWFramesContext.hwctx.
  */
 typedef struct AVVAAPIFramesContext {
     /**
      * Set by the user to apply surface attributes to all surfaces in
-     * the frame pool.  If null, default settings are used.
+     * the src_frame pool.  If null, default settings are used.
      */
     VASurfaceAttrib *attributes;
     int           nb_attributes;

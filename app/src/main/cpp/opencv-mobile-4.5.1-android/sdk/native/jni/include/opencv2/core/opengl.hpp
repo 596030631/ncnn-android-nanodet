@@ -59,7 +59,7 @@ To enable OpenGL support, configure OpenCV using CMake with WITH_OPENGL=ON . Cur
 supported only with WIN32, GTK and Qt backends on Windows and Linux (MacOS and Android are not
 supported). For GTK backend gtkglext-1.0 library is required.
 
-To use OpenGL functionality you should first create OpenGL context (window or frame buffer). You can
+To use OpenGL functionality you should first create OpenGL context (window or src_frame buffer). You can
 do this with namedWindow function or with other OpenGL toolkit (GLUT, for example).
 */
 //! @{

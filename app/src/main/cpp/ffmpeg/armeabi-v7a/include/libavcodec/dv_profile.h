@@ -39,9 +39,9 @@
 typedef struct AVDVProfile {
     int              dsf;                   /* value of the dsf in the DV header */
     int              video_stype;           /* stype for VAUX source pack */
-    int              frame_size;            /* total size of one frame in bytes */
+    int              frame_size;            /* total size of one src_frame in bytes */
     int              difseg_size;           /* number of DIF segments per DIF channel */
-    int              n_difchan;             /* number of DIF channels per frame */
+    int              n_difchan;             /* number of DIF channels per src_frame */
     AVRational       time_base;             /* 1/framerate */
     int              ltc_divisor;           /* FPS from the LTS standpoint */
     int              height;                /* picture height in pixels */
@@ -54,14 +54,14 @@ typedef struct AVDVProfile {
     int              audio_min_samples[3];  /* min amount of audio samples */
                                             /* for 48kHz, 44.1kHz and 32kHz */
     int              audio_samples_dist[5]; /* how many samples are supposed to be */
-                                            /* in each frame in a 5 frames window */
+                                            /* in each src_frame in a 5 frames window */
     const uint8_t  (*audio_shuffle)[9];     /* PCM shuffling table */
 } AVDVProfile;
 
 /**
- * Get a DV profile for the provided compressed frame.
+ * Get a DV profile for the provided compressed src_frame.
  *
- * @param sys the profile used for the previous frame, may be NULL
+ * @param sys the profile used for the previous src_frame, may be NULL
  * @param frame the compressed data buffer
  * @param buf_size size of the buffer in bytes
  * @return the DV profile for the supplied data or NULL on failure
@@ -76,7 +76,7 @@ const AVDVProfile *av_dv_codec_profile(int width, int height, enum AVPixelFormat
 
 /**
  * Get a DV profile for the provided stream parameters.
- * The frame rate is used as a best-effort parameter.
+ * The src_frame rate is used as a best-effort parameter.
  */
 const AVDVProfile *av_dv_codec_profile2(int width, int height, enum AVPixelFormat pix_fmt, AVRational frame_rate);
 

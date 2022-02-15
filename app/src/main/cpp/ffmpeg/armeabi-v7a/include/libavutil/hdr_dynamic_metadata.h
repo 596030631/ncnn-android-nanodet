@@ -332,8 +332,8 @@ typedef struct AVDynamicHDRPlus {
 AVDynamicHDRPlus *av_dynamic_hdr_plus_alloc(size_t *size);
 
 /**
- * Allocate a complete AVDynamicHDRPlus and add it to the frame.
- * @param frame The frame which side data is added to.
+ * Allocate a complete AVDynamicHDRPlus and add it to the src_frame.
+ * @param frame The src_frame which side data is added to.
  *
  * @return The AVDynamicHDRPlus structure to be filled by caller or NULL
  *         on failure.

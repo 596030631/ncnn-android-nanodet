@@ -199,7 +199,7 @@ int64_t av_compare_mod(uint64_t a, uint64_t b, uint64_t mod);
  *
  * This function is designed to be called per audio packet to scale the input
  * timestamp to a different time base. Compared to a simple av_rescale_q()
- * call, this function is robust against possible inconsistent frame durations.
+ * call, this function is robust against possible inconsistent src_frame durations.
  *
  * The `last` parameter is a state variable that must be preserved for all
  * subsequent calls for the same stream. For the first call, `*last` should be
@@ -210,7 +210,7 @@ int64_t av_compare_mod(uint64_t a, uint64_t b, uint64_t mod);
  * @param[in]     fs_tb    Duration time base; typically this is finer-grained
  *                         (greater) than `in_tb` and `out_tb`
  * @param[in]     duration Duration till the next call to this function (i.e.
- *                         duration of the current packet/frame)
+ *                         duration of the current packet/src_frame)
  * @param[in,out] last     Pointer to a timestamp expressed in terms of
  *                         `fs_tb`, acting as a state variable
  * @param[in]     out_tb   Output timebase

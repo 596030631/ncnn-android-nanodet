@@ -307,7 +307,7 @@ enum AVPixelFormat {
      * hwaccel API and filtering support AV_PIX_FMT_D3D11 only.
      *
      * data[0] contains a ID3D11Texture2D pointer, and data[1] contains the
-     * texture array index of the frame as intptr_t if the ID3D11Texture2D is
+     * texture array index of the src_frame as intptr_t if the ID3D11Texture2D is
      * an array texture (or always 0 if it's a normal texture).
      */
     AV_PIX_FMT_D3D11,

@@ -51,7 +51,7 @@ typedef struct AVHWDeviceInternal AVHWDeviceInternal;
  * This struct is reference-counted with the AVBuffer mechanism. The
  * av_hwdevice_ctx_alloc() constructor yields a reference, whose data field
  * points to the actual AVHWDeviceContext. Further objects derived from
- * AVHWDeviceContext (such as AVHWFramesContext, describing a frame pool with
+ * AVHWDeviceContext (such as AVHWFramesContext, describing a src_frame pool with
  * specific properties) will hold an internal reference to it. After all the
  * references are released, the AVHWDeviceContext itself will be freed,
  * optionally invoking a user-specified callback for uninitializing the hardware
@@ -183,13 +183,13 @@ typedef struct AVHWFramesContext {
      *
      * This field may be NULL, then libavutil will attempt to allocate a pool
      * internally. Note that certain device types enforce pools allocated at
-     * fixed size (frame count), which cannot be extended dynamically. In such a
+     * fixed size (src_frame count), which cannot be extended dynamically. In such a
      * case, initial_pool_size must be set appropriately.
      */
     AVBufferPool *pool;
 
     /**
-     * Initial size of the frame pool. If a device type does not support
+     * Initial size of the src_frame pool. If a device type does not support
      * dynamically resizing the pool, then this is also the maximum pool size.
      *
      * May be set by the caller before calling av_hwframe_ctx_init(). Must be
@@ -350,10 +350,10 @@ AVBufferRef *av_hwframe_ctx_alloc(AVBufferRef *device_ctx);
 int av_hwframe_ctx_init(AVBufferRef *ref);
 
 /**
- * Allocate a new frame attached to the given AVHWFramesContext.
+ * Allocate a new src_frame attached to the given AVHWFramesContext.
  *
  * @param hwframe_ctx a reference to an AVHWFramesContext
- * @param frame an empty (freshly allocated or unreffed) frame to be filled with
+ * @param frame an empty (freshly allocated or unreffed) src_frame to be filled with
  *              newly allocated buffers.
  * @param flags currently unused, should be set to zero
  * @return 0 on success, a negative AVERROR code on failure
@@ -382,10 +382,10 @@ int av_hwframe_get_buffer(AVBufferRef *hwframe_ctx, AVFrame *frame, int flags);
  * (i.e. AVFrame.width/height) may be smaller than the allocated dimensions, but
  * also have to be equal for both frames. When the display dimensions are
  * smaller than the allocated dimensions, the content of the padding in the
- * destination frame is unspecified.
+ * destination src_frame is unspecified.
  *
- * @param dst the destination frame. dst is not touched on failure.
- * @param src the source frame.
+ * @param dst the destination src_frame. dst is not touched on failure.
+ * @param src the source src_frame.
  * @param flags currently unused, should be set to zero
  * @return 0 on success, a negative AVERROR error code on failure.
  */
@@ -393,12 +393,12 @@ int av_hwframe_transfer_data(AVFrame *dst, const AVFrame *src, int flags);
 
 enum AVHWFrameTransferDirection {
     /**
-     * Transfer the data from the queried hw frame.
+     * Transfer the data from the queried hw src_frame.
      */
     AV_HWFRAME_TRANSFER_DIRECTION_FROM,
 
     /**
-     * Transfer the data to the queried hw frame.
+     * Transfer the data to the queried hw src_frame.
      */
     AV_HWFRAME_TRANSFER_DIRECTION_TO,
 };
@@ -407,7 +407,7 @@ enum AVHWFrameTransferDirection {
  * Get a list of possible source or target formats usable in
  * av_hwframe_transfer_data().
  *
- * @param hwframe_ctx the frame context to obtain the information for
+ * @param hwframe_ctx the src_frame context to obtain the information for
  * @param dir the direction of the transfer
  * @param formats the pointer to the output format list will be written here.
  *                The list is terminated with AV_PIX_FMT_NONE and must be freed
@@ -494,7 +494,7 @@ void av_hwframe_constraints_free(AVHWFramesConstraints **constraints);
 
 
 /**
- * Flags to apply to frame mappings.
+ * Flags to apply to src_frame mappings.
  */
 enum {
     /**
@@ -506,8 +506,8 @@ enum {
      */
     AV_HWFRAME_MAP_WRITE     = 1 << 1,
     /**
-     * The mapped frame will be overwritten completely in subsequent
-     * operations, so the current frame data need not be loaded.  Any values
+     * The mapped src_frame will be overwritten completely in subsequent
+     * operations, so the current src_frame data need not be loaded.  Any values
      * which are not overwritten are unspecified.
      */
     AV_HWFRAME_MAP_OVERWRITE = 1 << 2,
@@ -520,27 +520,27 @@ enum {
 };
 
 /**
- * Map a hardware frame.
+ * Map a hardware src_frame.
  *
  * This has a number of different possible effects, depending on the format
  * and origin of the src and dst frames.  On input, src should be a usable
- * frame with valid buffers and dst should be blank (typically as just created
+ * src_frame with valid buffers and dst should be blank (typically as just created
  * by av_frame_alloc()).  src should have an associated hwframe context, and
  * dst may optionally have a format and associated hwframe context.
  *
- * If src was created by mapping a frame from the hwframe context of dst,
+ * If src was created by mapping a src_frame from the hwframe context of dst,
  * then this function undoes the mapping - dst is replaced by a reference to
- * the frame that src was originally mapped from.
+ * the src_frame that src was originally mapped from.
  *
  * If both src and dst have an associated hwframe context, then this function
- * attempts to map the src frame from its hardware context to that of dst and
+ * attempts to map the src src_frame from its hardware context to that of dst and
  * then fill dst with appropriate data to be usable there.  This will only be
  * possible if the hwframe contexts and associated devices are compatible -
  * given compatible devices, av_hwframe_ctx_create_derived() can be used to
  * create a hwframe context for dst in which mapping should be possible.
  *
- * If src has a hwframe context but dst does not, then the src frame is
- * mapped to normal memory and should thereafter be usable as a normal frame.
+ * If src has a hwframe context but dst does not, then the src src_frame is
+ * mapped to normal memory and should thereafter be usable as a normal src_frame.
  * If the format is set on dst, then the mapping will attempt to create dst
  * with that format and fail if it is not possible.  If format is unset (is
  * AV_PIX_FMT_NONE) then dst will be mapped with whatever the most appropriate
@@ -550,8 +550,8 @@ enum {
  * possible with the given arguments and hwframe setup, while other return
  * values indicate that it failed somehow.
  *
- * @param dst Destination frame, to contain the mapping.
- * @param src Source frame, to be mapped.
+ * @param dst Destination src_frame, to contain the mapping.
+ * @param src Source src_frame, to be mapped.
  * @param flags Some combination of AV_HWFRAME_MAP_* flags.
  * @return Zero on success, negative AVERROR code on failure.
  */

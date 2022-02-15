@@ -2817,7 +2817,7 @@ CV_EXPORTS_W void accumulateProduct( InputArray src1, InputArray src2,
 /** @brief Updates a running average.
 
 The function calculates the weighted sum of the input image src and the accumulator dst so that dst
-becomes a running average of a frame sequence:
+becomes a running average of a src_frame sequence:
 
 \f[\texttt{dst} (x,y)  \leftarrow (1- \texttt{alpha} )  \cdot \texttt{dst} (x,y) +  \texttt{alpha} \cdot \texttt{src} (x,y)  \quad \text{if} \quad \texttt{mask} (x,y)  \ne 0\f]
 
@@ -3092,11 +3092,11 @@ statistics, the function computes probability of each element value in respect w
 probability distribution represented by the histogram. See how, for example, you can find and track
 a bright-colored object in a scene:
 
-- Before tracking, show the object to the camera so that it covers almost the whole frame.
+- Before tracking, show the object to the camera so that it covers almost the whole src_frame.
 Calculate a hue histogram. The histogram may have strong maximums, corresponding to the dominant
 colors in the object.
 
-- When tracking, calculate a back projection of a hue plane of each input video frame using that
+- When tracking, calculate a back projection of a hue plane of each input video src_frame using that
 pre-computed histogram. Threshold the back projection to suppress weak colors. It may also make
 sense to suppress pixels with non-sufficient color saturation and too dark or too bright pixels.
 

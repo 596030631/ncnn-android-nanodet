@@ -26,15 +26,15 @@
  * @file
  * API-specific header for AV_HWDEVICE_TYPE_DRM.
  *
- * Internal frame allocation is not currently supported - all frames
+ * Internal src_frame allocation is not currently supported - all frames
  * must be allocated by the user.  Thus AVHWFramesContext is always
- * NULL, though this may change if support for frame allocation is
+ * NULL, though this may change if support for src_frame allocation is
  * added in future.
  */
 
 enum {
     /**
-     * The maximum number of layers/planes in a DRM frame.
+     * The maximum number of layers/planes in a DRM src_frame.
      */
     AV_DRM_MAX_PLANES = 4
 };
@@ -74,7 +74,7 @@ typedef struct AVDRMObjectDescriptor {
 typedef struct AVDRMPlaneDescriptor {
     /**
      * Index of the object containing this plane in the objects
-     * array of the enclosing frame descriptor.
+     * array of the enclosing src_frame descriptor.
      */
     int object_index;
     /**
@@ -90,7 +90,7 @@ typedef struct AVDRMPlaneDescriptor {
 /**
  * DRM layer descriptor.
  *
- * Describes a single layer within a frame.  This has the structure
+ * Describes a single layer within a src_frame.  This has the structure
  * defined by its format, and will contain one or more planes.
  */
 typedef struct AVDRMLayerDescriptor {
@@ -111,10 +111,10 @@ typedef struct AVDRMLayerDescriptor {
 } AVDRMLayerDescriptor;
 
 /**
- * DRM frame descriptor.
+ * DRM src_frame descriptor.
  *
  * This is used as the data pointer for AV_PIX_FMT_DRM_PRIME frames.
- * It is also used by user-allocated frame pools - allocating in
+ * It is also used by user-allocated src_frame pools - allocating in
  * AVHWFramesContext.pool must return AVBufferRefs which contain
  * an object of this type.
  *
@@ -132,19 +132,19 @@ typedef struct AVDRMLayerDescriptor {
  */
 typedef struct AVDRMFrameDescriptor {
     /**
-     * Number of DRM objects making up this frame.
+     * Number of DRM objects making up this src_frame.
      */
     int nb_objects;
     /**
-     * Array of objects making up the frame.
+     * Array of objects making up the src_frame.
      */
     AVDRMObjectDescriptor objects[AV_DRM_MAX_PLANES];
     /**
-     * Number of layers in the frame.
+     * Number of layers in the src_frame.
      */
     int nb_layers;
     /**
-     * Array of layers in the frame.
+     * Array of layers in the src_frame.
      */
     AVDRMLayerDescriptor layers[AV_DRM_MAX_PLANES];
 } AVDRMFrameDescriptor;

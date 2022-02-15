@@ -35,7 +35,7 @@ typedef struct AVSubsampleEncryptionInfo {
 } AVSubsampleEncryptionInfo;
 
 /**
- * This describes encryption info for a packet.  This contains frame-specific
+ * This describes encryption info for a packet.  This contains src_frame-specific
  * info for how to decrypt the packet before passing it to the decoder.
  *
  * The size of this struct is not part of the public ABI.

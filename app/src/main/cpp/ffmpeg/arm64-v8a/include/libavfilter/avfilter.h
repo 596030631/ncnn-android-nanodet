@@ -30,7 +30,7 @@
 
 /**
  * @defgroup lavfi libavfilter
- * Graph-based frame editing library.
+ * Graph-based src_frame editing library.
  *
  * @{
  */
@@ -119,7 +119,7 @@ enum AVMediaType avfilter_pad_get_type(const AVFilterPad *pads, int pad_idx);
  * to enable or disable a filter in the timeline. Filters supporting this
  * option have this flag set. When the enable expression is false, the default
  * no-op filter_frame() function is called in place of the filter_frame()
- * callback defined on each input pad, thus the frame is passed unchanged to
+ * callback defined on each input pad, thus the src_frame is passed unchanged to
  * the next filters.
  */
 #define AVFILTER_FLAG_SUPPORT_TIMELINE_GENERIC  (1 << 16)
@@ -221,7 +221,7 @@ typedef struct AVFilter {
      * provided options. No more changes to this filter's inputs/outputs can be
      * done after this callback.
      *
-     * This callback must not assume that the filter links exist or frame
+     * This callback must not assume that the filter links exist or src_frame
      * parameters are known.
      *
      * @ref AVFilter.uninit "uninit" is guaranteed to be called even if
@@ -328,7 +328,7 @@ typedef struct AVFilter {
 } AVFilter;
 
 /**
- * Process multiple parts of the frame concurrently.
+ * Process multiple parts of the src_frame concurrently.
  */
 #define AVFILTER_THREAD_SLICE (1 << 0)
 
@@ -414,7 +414,7 @@ struct AVFilterContext {
      *
      * Some hardware filters require all frames that they will use for
      * output to be defined in advance before filtering starts.  For such
-     * filters, any hardware frame pools used for output must therefore be
+     * filters, any hardware src_frame pools used for output must therefore be
      * of fixed size.  The extra frames set here are on top of any number
      * that the filter needs internally in order to operate normally.
      *
@@ -513,13 +513,13 @@ struct AVFilterLink {
 
     /**
      * Current timestamp of the link, as defined by the most recent
-     * frame(s), in link time_base units.
+     * src_frame(s), in link time_base units.
      */
     int64_t current_pts;
 
     /**
      * Current timestamp of the link, as defined by the most recent
-     * frame(s), in AV_TIME_BASE units.
+     * src_frame(s), in AV_TIME_BASE units.
      */
     int64_t current_pts_us;
 
@@ -533,10 +533,10 @@ struct AVFilterLink {
      * if left to 0/0, will be automatically copied from the first input
      * of the source filter if it exists.
      *
-     * Sources should set it to the best estimation of the real frame rate.
-     * If the source frame rate is unknown or variable, set this to 1/0.
+     * Sources should set it to the best estimation of the real src_frame rate.
+     * If the source src_frame rate is unknown or variable, set this to 1/0.
      * Filters should update it if necessary depending on their function.
-     * Sinks can use it to set a default output frame rate.
+     * Sinks can use it to set a default output src_frame rate.
      * It is similar to the r_frame_rate field in AVStream.
      */
     AVRational frame_rate;
@@ -588,9 +588,9 @@ struct AVFilterLink {
     void *frame_pool;
 
     /**
-     * True if a frame is currently wanted on the output of this filter.
+     * True if a src_frame is currently wanted on the output of this filter.
      * Set when ff_request_frame() is called by the output,
-     * cleared when a frame is filtered.
+     * cleared when a src_frame is filtered.
      */
     int frame_wanted_out;
 
@@ -617,7 +617,7 @@ struct AVFilterLink {
     FFFrameQueue fifo;
 
     /**
-     * If set, the source filter can not generate a frame as is.
+     * If set, the source filter can not generate a src_frame as is.
      * The goal is to avoid repeatedly calling the request_frame() method on
      * the same link.
      */
@@ -1142,7 +1142,7 @@ int avfilter_graph_queue_command(AVFilterGraph *graph, const char *target, const
 char *avfilter_graph_dump(AVFilterGraph *graph, const char *options);
 
 /**
- * Request a frame on the oldest sink link.
+ * Request a src_frame on the oldest sink link.
  *
  * If the request returns AVERROR_EOF, try the next.
  *

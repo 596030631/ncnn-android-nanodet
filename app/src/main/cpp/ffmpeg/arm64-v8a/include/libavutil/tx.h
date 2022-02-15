@@ -36,7 +36,7 @@ enum AVTXType {
     AV_TX_FLOAT_FFT = 0,
     /**
      * Standard MDCT with sample data type of float and a scale type of
-     * float. Length is the frame size, not the window size (which is 2x frame)
+     * float. Length is the src_frame size, not the window size (which is 2x src_frame)
      */
     AV_TX_FLOAT_MDCT = 1,
 };

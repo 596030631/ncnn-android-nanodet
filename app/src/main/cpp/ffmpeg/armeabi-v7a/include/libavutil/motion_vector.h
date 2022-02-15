@@ -25,7 +25,7 @@ typedef struct AVMotionVector {
     /**
      * Where the current macroblock comes from; negative value when it comes
      * from the past, positive value when it comes from the future.
-     * XXX: set exact relative ref frame reference instead of a +/- 1 "direction".
+     * XXX: set exact relative ref src_frame reference instead of a +/- 1 "direction".
      */
     int32_t source;
     /**
@@ -33,11 +33,11 @@ typedef struct AVMotionVector {
      */
     uint8_t w, h;
     /**
-     * Absolute source position. Can be outside the frame area.
+     * Absolute source position. Can be outside the src_frame area.
      */
     int16_t src_x, src_y;
     /**
-     * Absolute destination position. Can be outside the frame area.
+     * Absolute destination position. Can be outside the src_frame area.
      */
     int16_t dst_x, dst_y;
     /**

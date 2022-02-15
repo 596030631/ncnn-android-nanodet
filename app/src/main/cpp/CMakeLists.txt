@@ -45,7 +45,7 @@ add_library(avfilter SHARED IMPORTED)
 
 set_target_properties(avfilter PROPERTIES IMPORTED_LOCATION ${CMAKE_SOURCE_DIR}/ffmpeg/${ANDROID_ABI}/libavfilter.so)
 
-add_library(nanodetncnn SHARED nanodetncnn.cpp nanodet.cpp ndkcamera.cpp rtspclient.cpp rtspcamera.cpp)
+add_library(nanodetncnn SHARED nanodetncnn.cpp nanodet.cpp ndkcamera.cpp rtspcamera.cpp)
 
 target_link_libraries(nanodetncnn
         ncnn

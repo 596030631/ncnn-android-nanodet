@@ -579,7 +579,7 @@ still relatively fast, use DeepFlow if you need better quality and don't care ab
 This implementation includes several additional features compared to the algorithm described in the paper,
 including spatial propagation of flow vectors (@ref getUseSpatialPropagation), as well as an option to
 utilize an initial flow approximation passed to @ref calc (which is, essentially, temporal propagation,
-if the previous frame's flow field is passed).
+if the previous src_frame's flow field is passed).
 */
 class CV_EXPORTS_W DISOpticalFlow : public DenseOpticalFlow
 {
@@ -718,20 +718,20 @@ public:
     virtual ~Tracker();
 
     /** @brief Initialize the tracker with a known bounding box that surrounded the target
-    @param image The initial frame
+    @param image The initial src_frame
     @param boundingBox The initial bounding box
     */
     CV_WRAP virtual
     void init(InputArray image, const Rect& boundingBox) = 0;
 
     /** @brief Update the tracker, find the new most likely bounding box for the target
-    @param image The current frame
+    @param image The current src_frame
     @param boundingBox The bounding box that represent the new target location, if true was returned, not
     modified otherwise
 
     @return True means that target was located and false means that tracker cannot locate target in
-    current frame. Note, that latter *does not* imply that tracker has failed, maybe target is indeed
-    missing from the frame (say, out of sight)
+    current src_frame. Note, that latter *does not* imply that tracker has failed, maybe target is indeed
+    missing from the src_frame (say, out of sight)
     */
     CV_WRAP virtual
     bool update(InputArray image, CV_OUT Rect& boundingBox) = 0;
@@ -783,7 +783,7 @@ public:
  *
  *  GOTURN (@cite GOTURN) is kind of trackers based on Convolutional Neural Networks (CNN). While taking all advantages of CNN trackers,
  *  GOTURN is much faster due to offline training without online fine-tuning nature.
- *  GOTURN tracker addresses the problem of single target tracking: given a bounding box label of an object in the first frame of the video,
+ *  GOTURN tracker addresses the problem of single target tracking: given a bounding box label of an object in the first src_frame of the video,
  *  we track that object through the rest of the video. NOTE: Current method of GOTURN does not handle occlusions; however, it is fairly
  *  robust to viewpoint changes, lighting changes, and deformations.
  *  Inputs of GOTURN are two RGB patches representing Target and Search patches resized to 227x227.

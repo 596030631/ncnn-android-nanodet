@@ -52,7 +52,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
     private int current_model = 0;
     private int current_cpugpu = 0;
 
-//    private SurfaceView cameraView;
+    private SurfaceView cameraView;
 
     /**
      * Called when the activity is first created.
@@ -64,10 +64,10 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
 
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
-//        cameraView = (SurfaceView) findViewById(R.id.cameraview);
+        cameraView = (SurfaceView) findViewById(R.id.cameraview);
 
-//        cameraView.getHolder().setFormat(PixelFormat.RGBA_8888);
-//        cameraView.getHolder().addCallback(this);
+        cameraView.getHolder().setFormat(PixelFormat.RGBA_8888);
+        cameraView.getHolder().addCallback(this);
 
         Button buttonSwitchCamera = (Button) findViewById(R.id.buttonSwitchCamera);
         buttonSwitchCamera.setOnClickListener(new View.OnClickListener() {
@@ -176,10 +176,9 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, REQUEST_READ);
         }
         nanodetncnn.initCallback();
-//        nanodetncnn.openCamera(facing);
-
+        new Thread(()->nanodetncnn.openCamera(facing)).start();
 //        new Thread(() -> nanodetncnn.open(rtspUrl)).start();
-        new Thread(() -> nanodetncnn.scalingVideo()).start();
+//        new Thread(() -> nanodetncnn.scalingVideo()).start();
 
     }
 

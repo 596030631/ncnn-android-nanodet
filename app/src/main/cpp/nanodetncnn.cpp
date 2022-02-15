@@ -38,8 +38,8 @@
 #include <opencv2/imgproc/imgproc_c.h>
 #include <opencv2/photo.hpp>
 
-#include "rtspclient.h"
 #include "rtspcamera.h"
+#include "sys/time.h"
 
 #if __ARM_NEON
 #include <arm_neon.h>
@@ -48,6 +48,9 @@
 JNIEnv *ncnn_env;
 jobject ncnn_thiz;
 jmethodID ncnn_callback;
+
+struct timeval tv;
+struct timezone tz;
 
 static jstring string2jstring(JNIEnv *env, const char *pat) {
     jclass strClass = env->FindClass("java/lang/String");
@@ -58,7 +61,7 @@ static jstring string2jstring(JNIEnv *env, const char *pat) {
     return (jstring) env->NewObject(strClass, ctorID, bytes, encoding);
 }
 
-static int draw_unsupported(cv::Mat &rgb) {
+static int draw_unsupported(const cv::Mat &rgb) {
     const char text[] = "unsupported";
 
     int baseLine = 0;
@@ -77,7 +80,7 @@ static int draw_unsupported(cv::Mat &rgb) {
     return 0;
 }
 
-static int draw_fps(cv::Mat &rgb) {
+static int draw_fps(const cv::Mat &rgb) {
     // resolve moving average
     float avg_fps = 0.f;
     {
@@ -130,15 +133,11 @@ static int draw_fps(cv::Mat &rgb) {
 static NanoDet *g_nanodet = 0;
 static ncnn::Mutex lock;
 
-class MyNdkCamera : public NdkCameraWindow {
-public:
-    virtual void on_image_render(cv::Mat &rgb) const;
-};
-
 class MyRtspCamera: public RtspCameraWindow {
 public:
-    virtual void on_image_render(cv::Mat &rgb) const;
+    virtual void on_image_render(const cv::Mat &rgb) const;
 };
+
 
 static const char *class_names[] = {
         "person", "bicycle", "car", "motorcycle", "airplane", "bus", "train", "truck", "boat",
@@ -160,38 +159,43 @@ static const char *class_names[] = {
         "hair drier", "toothbrush"
 };
 
-void MyRtspCamera::on_image_render(cv::Mat &rgb) const {
-    // nanodet
+void MyRtspCamera::on_image_render(const cv::Mat &rgb) const {
     {
-        __android_log_print(ANDROID_LOG_DEBUG, "ncnn", "run session");
-
         ncnn::MutexLockGuard g(lock);
-
         if (g_nanodet) {
             std::vector<Object> objects;
 
             g_nanodet->detect(rgb, objects);
+            int start = tv.tv_usec;
+            gettimeofday(&tv,&tz);
+            start = (tv.tv_usec - start) / 1000;
+            __android_log_print(ANDROID_LOG_WARN, "nanodet", "time use: %dms", start);
+            for (int i = 0; i < objects.size(); ++i) {
+                Object obj = objects[i];
+                __android_log_print(ANDROID_LOG_WARN, "nanodet", "label[%s]  prob[%.5f] at %.2f %.2f %.2f x %.2f", class_names[obj.label], obj.prob,
+                                    obj.rect.x, obj.rect.y, obj.rect.width, obj.rect.height);
 
-            g_nanodet->draw(rgb, objects);
-
-            char str[512] = {0};
-
-            for (auto &object : objects) {
-                strcat(str, class_names[object.label]);
             }
-            jstring js = string2jstring(ncnn_env, str);
-            ncnn_env->CallVoidMethod(ncnn_thiz, ncnn_callback, js);
+//            g_nanodet->draw(rgb, objects);
+//
+//            char str[512] = {0};
+//
+//            for (auto &object : objects) {
+//                strcat(str, class_names[object.label]);
+//            }
+//            jstring js = string2jstring(ncnn_env, str);
+//            ncnn_env->CallVoidMethod(ncnn_thiz, ncnn_callback, js);
             return;
 
         } else {
-            draw_unsupported(rgb);
+//            draw_unsupported(rgb);
         }
     }
 
-    draw_fps(rgb);
+//    draw_fps(rgb);
 }
 
-static MyRtspCamera *g_camera = 0;
+static MyRtspCamera *g_camera = nullptr;
 
 extern "C" {
 
@@ -304,7 +308,7 @@ Java_com_tencent_nanodetncnn_NanoDetNcnn_openCamera(JNIEnv *env, jobject thiz, j
 
     __android_log_print(ANDROID_LOG_DEBUG, "ncnn", "openCamera %d", facing);
 
-    g_camera->open((int) facing);
+    g_camera->open("rtsp://admin:123456@192.168.31.46/stream0");
 
     return JNI_TRUE;
 }
@@ -312,94 +316,6 @@ Java_com_tencent_nanodetncnn_NanoDetNcnn_openCamera(JNIEnv *env, jobject thiz, j
 // public native boolean testImage();
 JNIEXPORT jboolean JNICALL
 Java_com_tencent_nanodetncnn_NanoDetNcnn_testImage(JNIEnv *env, jobject thiz, jobject bitmap) {
-
-    ncnn::MutexLockGuard g(lock);
-    AndroidBitmapInfo info;
-    void *pixels = nullptr;
-
-    CV_Assert(AndroidBitmap_getInfo(env, bitmap, &info) >= 0);
-    CV_Assert(info.format == ANDROID_BITMAP_FORMAT_RGBA_8888 ||
-              info.format == ANDROID_BITMAP_FORMAT_RGB_565);
-    CV_Assert(AndroidBitmap_lockPixels(env, bitmap, &pixels) >= 0);
-    CV_Assert(pixels);
-
-
-    cv::Mat rgb;
-    rgb.create(info.height, info.width, CV_8UC3);
-
-//    cv::Mat rgb(info.height, info.width, CV_8UC3, pixels);
-
-    if (info.format == ANDROID_BITMAP_FORMAT_RGBA_8888) {
-        __android_log_print(ANDROID_LOG_DEBUG, "ncnn", "nBitmapToMat: RGBA_8888 -> CV_8UC4");
-        cv::Mat tmp(info.height, info.width, CV_8UC4, pixels);
-        if (false) {
-            cvtColor(tmp, rgb, cv::COLOR_mRGBA2RGBA);
-        } else {
-            tmp.copyTo(rgb);
-        }
-    } else {
-        // info.format == ANDROID_BITMAP_FORMAT_RGB_565
-        __android_log_print(ANDROID_LOG_DEBUG, "ncnn", "nBitmapToMat: RGB_565 -> CV_8UC4");
-        cv::Mat tmp(info.height, info.width, CV_8UC2, pixels);
-        cvtColor(tmp, rgb, cv::COLOR_BGR5652RGBA);
-    }
-
-    if (g_nanodet) {
-        std::vector<Object> objects;
-        g_nanodet->detect(rgb, objects, 0.1f, 0.4f);
-        char str[512] = {0};
-        char tmp[16] = {0};
-        for (auto &object : objects) {
-            strcat(str, class_names[object.label]);
-            sprintf(tmp, "\tprob:%f\t", object.prob);
-            strcat(str, tmp);
-        }
-
-        g_nanodet->draw(rgb, objects);
-
-        __android_log_print(ANDROID_LOG_DEBUG, "ncnn", "nMatToBitmap");
-        CV_Assert(AndroidBitmap_getInfo(env, bitmap, &info) >= 0);
-        CV_Assert(info.format == ANDROID_BITMAP_FORMAT_RGBA_8888 ||
-                  info.format == ANDROID_BITMAP_FORMAT_RGB_565);
-        CV_Assert(rgb.dims == 2 && info.height == (uint32_t) rgb.rows &&
-                  info.width == (uint32_t) rgb.cols);
-        CV_Assert(rgb.type() == CV_8UC1 || rgb.type() == CV_8UC3 || rgb.type() == CV_8UC4);
-        CV_Assert(AndroidBitmap_lockPixels(env, bitmap, &pixels) >= 0);
-        CV_Assert(pixels);
-        if (info.format == ANDROID_BITMAP_FORMAT_RGBA_8888) {
-            cv::Mat tmp(info.height, info.width, CV_8UC4, pixels);
-            if (rgb.type() == CV_8UC1) {
-                __android_log_print(ANDROID_LOG_DEBUG, "ncnn",
-                                    "nMatToBitmap: CV_8UC1 -> RGBA_8888");
-                cvtColor(rgb, tmp, cv::COLOR_GRAY2RGBA);
-            } else if (rgb.type() == CV_8UC3) {
-                __android_log_print(ANDROID_LOG_DEBUG, "ncnn",
-                                    "nMatToBitmap: CV_8UC3 -> RGBA_8888");
-                cvtColor(rgb, tmp, cv::COLOR_RGB2RGBA);
-            } else if (rgb.type() == CV_8UC4) {
-                __android_log_print(ANDROID_LOG_DEBUG, "ncnn",
-                                    "nMatToBitmap: CV_8UC4 -> RGBA_8888");
-                if (false) cvtColor(rgb, tmp, cv::COLOR_RGBA2mRGBA);
-                else rgb.copyTo(tmp);
-            }
-        } else {
-            // info.format == ANDROID_BITMAP_FORMAT_RGB_565
-            cv::Mat tmp(info.height, info.width, CV_8UC2, pixels);
-            if (rgb.type() == CV_8UC1) {
-                cvtColor(rgb, tmp, cv::COLOR_GRAY2BGR565);
-            } else if (rgb.type() == CV_8UC3) {
-                cvtColor(rgb, tmp, cv::COLOR_RGB2BGR565);
-            } else if (rgb.type() == CV_8UC4) {
-                cvtColor(rgb, tmp, cv::COLOR_RGBA2BGR565);
-            }
-        }
-        AndroidBitmap_unlockPixels(env, bitmap);
-
-
-    } else {
-        __android_log_print(ANDROID_LOG_DEBUG, "ncnn", "*");
-    }
-    AndroidBitmap_unlockPixels(env, bitmap);
     return JNI_TRUE;
 }
 
@@ -408,7 +324,7 @@ JNIEXPORT jboolean JNICALL
 Java_com_tencent_nanodetncnn_NanoDetNcnn_closeCamera(JNIEnv *env, jobject thiz) {
     __android_log_print(ANDROID_LOG_DEBUG, "ncnn", "closeCamera");
 
-    g_camera->close();
+//    g_camera->close();
 
     return JNI_TRUE;
 }
@@ -448,7 +364,7 @@ Java_com_tencent_nanodetncnn_NanoDetNcnn_open(
         JNIEnv *env,
         jobject /* this */, jstring rtspUrl) {
     const char * c_rtspUrl = env->GetStringUTFChars(rtspUrl,JNI_FALSE);
-    rtspclient::getInstance().open(c_rtspUrl);
+//    RtspCamera::getInstance().open(c_rtspUrl);
     env->ReleaseStringUTFChars(rtspUrl, c_rtspUrl);
 }
 
@@ -457,7 +373,7 @@ extern "C" JNIEXPORT void JNICALL
 Java_com_tencent_nanodetncnn_NanoDetNcnn_close(
         JNIEnv *env,
         jobject /* this */) {
-    rtspclient::getInstance().close();
+//    RtspCamera::getInstance().close();
 }
 
 extern "C" JNIEXPORT void JNICALL
@@ -482,6 +398,5 @@ extern "C" JNIEXPORT void JNICALL
 Java_com_tencent_nanodetncnn_NanoDetNcnn_scalingVideo(
         JNIEnv *env,
         jobject /* this */) {
-    MyRtspCamera scalingVideo;
-    scalingVideo.testScaleVideo();
+
 }

@@ -41,14 +41,14 @@ enum {
     AV_BUFFERSRC_FLAG_NO_CHECK_FORMAT = 1,
 
     /**
-     * Immediately push the frame to the output.
+     * Immediately push the src_frame to the output.
      */
     AV_BUFFERSRC_FLAG_PUSH = 4,
 
     /**
-     * Keep a reference to the frame.
-     * If the frame if reference-counted, create a new reference; otherwise
-     * copy the frame data.
+     * Keep a reference to the src_frame.
+     * If the src_frame if reference-counted, create a new reference; otherwise
+     * copy the src_frame data.
      */
     AV_BUFFERSRC_FLAG_KEEP_REF = 8,
 
@@ -58,8 +58,8 @@ enum {
  * Get the number of failed requests.
  *
  * A failed request is when the request_frame method is called while no
- * frame is present in the buffer.
- * The number is reset when a frame is added.
+ * src_frame is present in the buffer.
+ * The number is reset when a src_frame is added.
  */
 unsigned av_buffersrc_get_nb_failed_requests(AVFilterContext *buffer_src);
 
@@ -92,7 +92,7 @@ typedef struct AVBufferSrcParameters {
     AVRational sample_aspect_ratio;
 
     /**
-     * Video only, the frame rate of the input video. This field must only be
+     * Video only, the src_frame rate of the input video. This field must only be
      * set to a non-zero value if input stream has a known constant framerate
      * and should be left at its initial value if the framerate is variable or
      * unknown.
@@ -138,11 +138,11 @@ AVBufferSrcParameters *av_buffersrc_parameters_alloc(void);
 int av_buffersrc_parameters_set(AVFilterContext *ctx, AVBufferSrcParameters *param);
 
 /**
- * Add a frame to the buffer source.
+ * Add a src_frame to the buffer source.
  *
  * @param ctx   an instance of the buffersrc filter
- * @param frame frame to be added. If the frame is reference counted, this
- * function will make a new reference to it. Otherwise the frame data will be
+ * @param frame src_frame to be added. If the src_frame is reference counted, this
+ * function will make a new reference to it. Otherwise the src_frame data will be
  * copied.
  *
  * @return 0 on success, a negative AVERROR on error
@@ -154,18 +154,18 @@ av_warn_unused_result
 int av_buffersrc_write_frame(AVFilterContext *ctx, const AVFrame *frame);
 
 /**
- * Add a frame to the buffer source.
+ * Add a src_frame to the buffer source.
  *
  * @param ctx   an instance of the buffersrc filter
- * @param frame frame to be added. If the frame is reference counted, this
- * function will take ownership of the reference(s) and reset the frame.
- * Otherwise the frame data will be copied. If this function returns an error,
- * the input frame is not touched.
+ * @param frame src_frame to be added. If the src_frame is reference counted, this
+ * function will take ownership of the reference(s) and reset the src_frame.
+ * Otherwise the src_frame data will be copied. If this function returns an error,
+ * the input src_frame is not touched.
  *
  * @return 0 on success, a negative AVERROR on error.
  *
  * @note the difference between this function and av_buffersrc_write_frame() is
- * that av_buffersrc_write_frame() creates a new reference to the input frame,
+ * that av_buffersrc_write_frame() creates a new reference to the input src_frame,
  * while this function takes ownership of the reference passed to it.
  *
  * This function is equivalent to av_buffersrc_add_frame_flags() without the
@@ -175,16 +175,16 @@ av_warn_unused_result
 int av_buffersrc_add_frame(AVFilterContext *ctx, AVFrame *frame);
 
 /**
- * Add a frame to the buffer source.
+ * Add a src_frame to the buffer source.
  *
- * By default, if the frame is reference-counted, this function will take
- * ownership of the reference(s) and reset the frame. This can be controlled
+ * By default, if the src_frame is reference-counted, this function will take
+ * ownership of the reference(s) and reset the src_frame. This can be controlled
  * using the flags.
  *
- * If this function returns an error, the input frame is not touched.
+ * If this function returns an error, the input src_frame is not touched.
  *
  * @param buffer_src  pointer to a buffer source context
- * @param frame       a frame, or NULL to mark EOF
+ * @param frame       a src_frame, or NULL to mark EOF
  * @param flags       a combination of AV_BUFFERSRC_FLAG_*
  * @return            >= 0 in case of success, a negative AVERROR code
  *                    in case of failure
@@ -198,7 +198,7 @@ int av_buffersrc_add_frame_flags(AVFilterContext *buffer_src,
  *
  * This is similar to passing NULL to av_buffersrc_add_frame_flags()
  * except it takes the timestamp of the EOF, i.e. the timestamp of the end
- * of the last frame.
+ * of the last src_frame.
  */
 int av_buffersrc_close(AVFilterContext *ctx, int64_t pts, unsigned flags);
 

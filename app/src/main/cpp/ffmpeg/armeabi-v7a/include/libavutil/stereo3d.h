@@ -41,7 +41,7 @@
 /**
  * @addtogroup lavu_video_stereo3d
  * A stereoscopic video file consists in multiple views embedded in a single
- * frame, usually describing two views of a scene. This file describes all
+ * src_frame, usually describing two views of a scene. This file describes all
  * possible codec-independent view arrangements.
  * */
 
@@ -180,7 +180,7 @@ typedef struct AVStereo3D {
     enum AVStereo3DType type;
 
     /**
-     * Additional information about the frame packing.
+     * Additional information about the src_frame packing.
      */
     int flags;
 
@@ -199,9 +199,9 @@ typedef struct AVStereo3D {
 AVStereo3D *av_stereo3d_alloc(void);
 
 /**
- * Allocate a complete AVFrameSideData and add it to the frame.
+ * Allocate a complete AVFrameSideData and add it to the src_frame.
  *
- * @param frame The frame which side data is added to.
+ * @param frame The src_frame which side data is added to.
  *
  * @return The AVStereo3D structure to be filled by caller.
  */

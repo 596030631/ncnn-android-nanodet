@@ -1905,7 +1905,7 @@ CVAPI(void*) cvNextTreeNode( CvTreeNodeIterator* tree_iterator );
 CVAPI(void*) cvPrevTreeNode( CvTreeNodeIterator* tree_iterator );
 
 /** Inserts sequence into tree with specified "parent" sequence.
-   If parent is equal to frame (e.g. the most external contour),
+   If parent is equal to src_frame (e.g. the most external contour),
    then added contour will have null pointer to parent. */
 CVAPI(void) cvInsertNodeIntoTree( void* node, void* parent, void* frame );
 

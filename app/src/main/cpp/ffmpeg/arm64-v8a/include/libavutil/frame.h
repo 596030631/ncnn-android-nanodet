@@ -19,7 +19,7 @@
 /**
  * @file
  * @ingroup lavu_frame
- * reference-counted frame API
+ * reference-counted src_frame API
  */
 
 #ifndef AVUTIL_FRAME_H
@@ -76,7 +76,7 @@ enum AVFrameSideDataType {
     AV_FRAME_DATA_REPLAYGAIN,
     /**
      * This side data contains a 3x3 transformation matrix describing an affine
-     * transformation that needs to be applied to the frame for correct
+     * transformation that needs to be applied to the src_frame for correct
      * presentation.
      *
      * See libavutil/display.h for a detailed description of the data.
@@ -107,19 +107,19 @@ enum AVFrameSideDataType {
      */
     AV_FRAME_DATA_SKIP_SAMPLES,
     /**
-     * This side data must be associated with an audio frame and corresponds to
+     * This side data must be associated with an audio src_frame and corresponds to
      * enum AVAudioServiceType defined in avcodec.h.
      */
     AV_FRAME_DATA_AUDIO_SERVICE_TYPE,
     /**
-     * Mastering display metadata associated with a video frame. The payload is
+     * Mastering display metadata associated with a video src_frame. The payload is
      * an AVMasteringDisplayMetadata type and contains information about the
      * mastering display color volume.
      */
     AV_FRAME_DATA_MASTERING_DISPLAY_METADATA,
     /**
      * The GOP timecode in 25 bit timecode format. Data format is 64-bit integer.
-     * This is set on the first frame of a GOP that has a temporal reference of 0.
+     * This is set on the first src_frame of a GOP that has a temporal reference of 0.
      */
     AV_FRAME_DATA_GOP_TIMECODE,
 
@@ -168,7 +168,7 @@ enum AVFrameSideDataType {
     AV_FRAME_DATA_S12M_TIMECODE,
 
     /**
-     * HDR dynamic metadata associated with a video frame. The payload is
+     * HDR dynamic metadata associated with a video src_frame. The payload is
      * an AVDynamicHDRPlus type and contains information for color
      * volume transform - application 4 of SMPTE 2094-40:2016 standard.
      */
@@ -215,7 +215,7 @@ typedef struct AVFrameSideData {
  * to truncate the list.
  *
  * When overlapping regions are defined, the first region containing a given
- * area of the frame applies.
+ * area of the src_frame applies.
  */
 typedef struct AVRegionOfInterest {
     /**
@@ -224,8 +224,8 @@ typedef struct AVRegionOfInterest {
      */
     uint32_t self_size;
     /**
-     * Distance in pixels from the top edge of the frame to the top and
-     * bottom edges and from the left edge of the frame to the left and
+     * Distance in pixels from the top edge of the src_frame to the top and
+     * bottom edges and from the left edge of the src_frame to the left and
      * right edges of the rectangle defining this region of interest.
      *
      * The constraints on a region are encoder dependent, so the region
@@ -244,7 +244,7 @@ typedef struct AVRegionOfInterest {
      * while a positive value asks for worse quality (greater quantisation).
      *
      * The range is calibrated so that the extreme values indicate the
-     * largest possible offset - if the rest of the frame is encoded with the
+     * largest possible offset - if the rest of the src_frame is encoded with the
      * worst possible quality, an offset of -1 indicates that this region
      * should be encoded with the best possible quality anyway.  Intermediate
      * values are then interpolated in some codec-dependent way.
@@ -252,12 +252,12 @@ typedef struct AVRegionOfInterest {
      * For example, in 10-bit H.264 the quantisation parameter varies between
      * -12 and 51.  A typical qoffset value of -1/10 therefore indicates that
      * this region should be encoded with a QP around one-tenth of the full
-     * range better than the rest of the frame.  So, if most of the frame
+     * range better than the rest of the src_frame.  So, if most of the src_frame
      * were to be encoded with a QP of around 30, this region would get a QP
      * of around 24 (an offset of approximately -1/10 * (51 - -12) = -6.3).
      * An extreme value of -1 would indicate that this region should be
      * encoded with the best possible quality regardless of the treatment of
-     * the rest of the frame - that is, should be encoded at a QP of -12.
+     * the rest of the src_frame - that is, should be encoded at a QP of -12.
      */
     AVRational qoffset;
 } AVRegionOfInterest;
@@ -273,7 +273,7 @@ typedef struct AVRegionOfInterest {
  * AVFrame is typically allocated once and then reused multiple times to hold
  * different data (e.g. a single AVFrame to hold frames received from a
  * decoder). In such a case, av_frame_unref() will free any references held by
- * the frame and reset it to its original clean state before it
+ * the src_frame and reset it to its original clean state before it
  * is reused again.
  *
  * The data described by an AVFrame is usually reference counted through the
@@ -335,7 +335,7 @@ typedef struct AVFrame {
      * For packed audio, there is just one data pointer, and linesize[0]
      * contains the total size of the buffer for all channels.
      *
-     * Note: Both data and extended_data should always be set in a valid frame,
+     * Note: Both data and extended_data should always be set in a valid src_frame,
      * but for planar audio with more channels that can fit in data,
      * extended_data must be used in order to access all channels.
      */
@@ -343,10 +343,10 @@ typedef struct AVFrame {
 
     /**
      * @name Video dimensions
-     * Video frames only. The coded dimensions (in pixels) of the video frame,
+     * Video frames only. The coded dimensions (in pixels) of the video src_frame,
      * i.e. the size of the rectangle that contains some well-defined values.
      *
-     * @note The part of the frame intended for display/presentation is further
+     * @note The part of the src_frame intended for display/presentation is further
      * restricted by the @ref cropping "Cropping rectangle".
      * @{
      */
@@ -356,12 +356,12 @@ typedef struct AVFrame {
      */
 
     /**
-     * number of audio samples (per channel) described by this frame
+     * number of audio samples (per channel) described by this src_frame
      */
     int nb_samples;
 
     /**
-     * format of the frame, -1 if unknown or unset
+     * format of the src_frame, -1 if unknown or unset
      * Values correspond to enum AVPixelFormat for video frames,
      * enum AVSampleFormat for audio)
      */
@@ -373,23 +373,23 @@ typedef struct AVFrame {
     int key_frame;
 
     /**
-     * Picture type of the frame.
+     * Picture type of the src_frame.
      */
     enum AVPictureType pict_type;
 
     /**
-     * Sample aspect ratio for the video frame, 0/1 if unknown/unspecified.
+     * Sample aspect ratio for the video src_frame, 0/1 if unknown/unspecified.
      */
     AVRational sample_aspect_ratio;
 
     /**
-     * Presentation timestamp in time_base units (time when frame should be shown to user).
+     * Presentation timestamp in time_base units (time when src_frame should be shown to user).
      */
     int64_t pts;
 
 #if FF_API_PKT_PTS
     /**
-     * PTS copied from the AVPacket that was decoded to produce this frame.
+     * PTS copied from the AVPacket that was decoded to produce this src_frame.
      * @deprecated use the pts field instead
      */
     attribute_deprecated
@@ -397,7 +397,7 @@ typedef struct AVFrame {
 #endif
 
     /**
-     * DTS copied from the AVPacket that triggered returning this frame. (if frame threading isn't used)
+     * DTS copied from the AVPacket that triggered returning this src_frame. (if src_frame threading isn't used)
      * This is also the Presentation time of this AVFrame calculated from
      * only AVPacket.dts values without pts values.
      */
@@ -447,7 +447,7 @@ typedef struct AVFrame {
     int top_field_first;
 
     /**
-     * Tell user application that palette has changed from previous frame.
+     * Tell user application that palette has changed from previous src_frame.
      */
     int palette_has_changed;
 
@@ -472,8 +472,8 @@ typedef struct AVFrame {
     uint64_t channel_layout;
 
     /**
-     * AVBuffer references backing the data for this frame. If all elements of
-     * this array are NULL, then this frame is not reference counted. This array
+     * AVBuffer references backing the data for this src_frame. If all elements of
+     * this array are NULL, then this src_frame is not reference counted. This array
      * must be filled contiguously -- if buf[i] is non-NULL then buf[j] must
      * also be non-NULL for all j < i.
      *
@@ -495,7 +495,7 @@ typedef struct AVFrame {
      * which cannot fit into AVFrame.buf.
      *
      * This array is always allocated using av_malloc() by whoever constructs
-     * the frame. It is freed in av_frame_unref().
+     * the src_frame. It is freed in av_frame_unref().
      */
     AVBufferRef **extended_buf;
     /**
@@ -509,13 +509,13 @@ typedef struct AVFrame {
 /**
  * @defgroup lavu_frame_flags AV_FRAME_FLAGS
  * @ingroup lavu_frame
- * Flags describing additional frame properties.
+ * Flags describing additional src_frame properties.
  *
  * @{
  */
 
 /**
- * The frame data may be corrupted, e.g. due to decoding errors.
+ * The src_frame data may be corrupted, e.g. due to decoding errors.
  */
 #define AV_FRAME_FLAG_CORRUPT       (1 << 0)
 /**
@@ -552,7 +552,7 @@ typedef struct AVFrame {
     enum AVChromaLocation chroma_location;
 
     /**
-     * frame timestamp estimated using various heuristics, in stream time base
+     * src_frame timestamp estimated using various heuristics, in stream time base
      * - encoding: unused
      * - decoding: set by libavcodec, read by user.
      */
@@ -581,8 +581,8 @@ typedef struct AVFrame {
     AVDictionary *metadata;
 
     /**
-     * decode error flags of the frame, set to a combination of
-     * FF_DECODE_ERROR_xxx flags if the decoder produced a frame, but there
+     * decode error flags of the src_frame, set to a combination of
+     * FF_DECODE_ERROR_xxx flags if the decoder produced a src_frame, but there
      * were errors during the decoding.
      * - encoding: unused
      * - decoding: set by libavcodec, read by user.
@@ -602,7 +602,7 @@ typedef struct AVFrame {
 
     /**
      * size of the corresponding packet containing the compressed
-     * frame.
+     * src_frame.
      * It is set to a negative value if unknown.
      * - encoding: unused
      * - decoding: set by libavcodec, read by user.
@@ -629,15 +629,15 @@ typedef struct AVFrame {
 #endif
     /**
      * For hwaccel-format frames, this should be a reference to the
-     * AVHWFramesContext describing the frame.
+     * AVHWFramesContext describing the src_frame.
      */
     AVBufferRef *hw_frames_ctx;
 
     /**
      * AVBufferRef for free use by the API user. FFmpeg will never check the
      * contents of the buffer ref. FFmpeg calls av_buffer_unref() on it when
-     * the frame is unreferenced. av_frame_copy_props() calls create a new
-     * reference with av_buffer_ref() for the target frame's opaque_ref field.
+     * the src_frame is unreferenced. av_frame_copy_props() calls create a new
+     * reference with av_buffer_ref() for the target src_frame's opaque_ref field.
      *
      * This is unrelated to the opaque field, although it serves a similar
      * purpose.
@@ -648,8 +648,8 @@ typedef struct AVFrame {
      * @anchor cropping
      * @name Cropping
      * Video frames only. The number of pixels to discard from the the
-     * top/bottom/left/right border of the frame to obtain the sub-rectangle of
-     * the frame intended for presentation.
+     * top/bottom/left/right border of the src_frame to obtain the sub-rectangle of
+     * the src_frame intended for presentation.
      * @{
      */
     size_t crop_top;
@@ -663,13 +663,13 @@ typedef struct AVFrame {
     /**
      * AVBufferRef for internal use by a single libav* library.
      * Must not be used to transfer data between libraries.
-     * Has to be NULL when ownership of the frame leaves the respective library.
+     * Has to be NULL when ownership of the src_frame leaves the respective library.
      *
      * Code outside the FFmpeg libs should never check or change the contents of the buffer ref.
      *
-     * FFmpeg calls av_buffer_unref() on it when the frame is unreferenced.
+     * FFmpeg calls av_buffer_unref() on it when the src_frame is unreferenced.
      * av_frame_copy_props() calls create a new reference with av_buffer_ref()
-     * for the target frame's private_ref field.
+     * for the target src_frame's private_ref field.
      */
     AVBufferRef *private_ref;
 } AVFrame;
@@ -750,18 +750,18 @@ const char *av_get_colorspace_name(enum AVColorSpace val);
 AVFrame *av_frame_alloc(void);
 
 /**
- * Free the frame and any dynamically allocated objects in it,
- * e.g. extended_data. If the frame is reference counted, it will be
+ * Free the src_frame and any dynamically allocated objects in it,
+ * e.g. extended_data. If the src_frame is reference counted, it will be
  * unreferenced first.
  *
- * @param frame frame to be freed. The pointer will be set to NULL.
+ * @param frame src_frame to be freed. The pointer will be set to NULL.
  */
 void av_frame_free(AVFrame **frame);
 
 /**
- * Set up a new reference to the data described by the source frame.
+ * Set up a new reference to the data described by the source src_frame.
  *
- * Copy frame properties from src to dst and create a new reference for each
+ * Copy src_frame properties from src to dst and create a new reference for each
  * AVBufferRef from src.
  *
  * If src is not reference counted, new buffers are allocated and the data is
@@ -776,7 +776,7 @@ void av_frame_free(AVFrame **frame);
 int av_frame_ref(AVFrame *dst, const AVFrame *src);
 
 /**
- * Create a new frame that references the same data as src.
+ * Create a new src_frame that references the same data as src.
  *
  * This is a shortcut for av_frame_alloc()+av_frame_ref().
  *
@@ -785,7 +785,7 @@ int av_frame_ref(AVFrame *dst, const AVFrame *src);
 AVFrame *av_frame_clone(const AVFrame *src);
 
 /**
- * Unreference all the buffers referenced by frame and reset the frame fields.
+ * Unreference all the buffers referenced by src_frame and reset the src_frame fields.
  */
 void av_frame_unref(AVFrame *frame);
 
@@ -801,7 +801,7 @@ void av_frame_move_ref(AVFrame *dst, AVFrame *src);
 /**
  * Allocate new buffer(s) for audio or video data.
  *
- * The following fields must be set on frame before calling this function:
+ * The following fields must be set on src_frame before calling this function:
  * - format (pixel format for video, sample format for audio)
  * - width and height for video
  * - nb_samples and channel_layout for audio
@@ -810,11 +810,11 @@ void av_frame_move_ref(AVFrame *dst, AVFrame *src);
  * necessary, allocate and fill AVFrame.extended_data and AVFrame.extended_buf.
  * For planar formats, one buffer will be allocated for each plane.
  *
- * @warning: if frame already has been allocated, calling this function will
+ * @warning: if src_frame already has been allocated, calling this function will
  *           leak memory. In addition, undefined behavior can occur in certain
  *           cases.
  *
- * @param frame frame in which to store the new buffers.
+ * @param frame src_frame in which to store the new buffers.
  * @param align Required buffer size alignment. If equal to 0, alignment will be
  *              chosen automatically for the current CPU. It is highly
  *              recommended to pass 0 here unless you know what you are doing.
@@ -824,11 +824,11 @@ void av_frame_move_ref(AVFrame *dst, AVFrame *src);
 int av_frame_get_buffer(AVFrame *frame, int align);
 
 /**
- * Check if the frame data is writable.
+ * Check if the src_frame data is writable.
  *
- * @return A positive value if the frame data is writable (which is true if and
+ * @return A positive value if the src_frame data is writable (which is true if and
  * only if each of the underlying buffers has only one reference, namely the one
- * stored in this frame). Return 0 otherwise.
+ * stored in this src_frame). Return 0 otherwise.
  *
  * If 1 is returned the answer is valid until av_buffer_ref() is called on any
  * of the underlying AVBufferRefs (e.g. through av_frame_ref() or directly).
@@ -838,9 +838,9 @@ int av_frame_get_buffer(AVFrame *frame, int align);
 int av_frame_is_writable(AVFrame *frame);
 
 /**
- * Ensure that the frame data is writable, avoiding data copy if possible.
+ * Ensure that the src_frame data is writable, avoiding data copy if possible.
  *
- * Do nothing if the frame is writable, allocate new buffers and copy the data
+ * Do nothing if the src_frame is writable, allocate new buffers and copy the data
  * if it is not.
  *
  * @return 0 on success, a negative AVERROR on error.
@@ -851,12 +851,12 @@ int av_frame_is_writable(AVFrame *frame);
 int av_frame_make_writable(AVFrame *frame);
 
 /**
- * Copy the frame data from src to dst.
+ * Copy the src_frame data from src to dst.
  *
  * This function does not allocate anything, dst must be already initialized and
  * allocated with the same parameters as src.
  *
- * This function only copies the frame data (i.e. the contents of the data /
+ * This function only copies the src_frame data (i.e. the contents of the data /
  * extended data arrays), not any other properties.
  *
  * @return >= 0 on success, a negative AVERROR on error.
@@ -876,17 +876,17 @@ int av_frame_copy_props(AVFrame *dst, const AVFrame *src);
 /**
  * Get the buffer reference a given data plane is stored in.
  *
- * @param plane index of the data plane of interest in frame->extended_data.
+ * @param plane index of the data plane of interest in src_frame->extended_data.
  *
  * @return the buffer reference that contains the plane or NULL if the input
- * frame is not valid.
+ * src_frame is not valid.
  */
 AVBufferRef *av_frame_get_plane_buffer(AVFrame *frame, int plane);
 
 /**
- * Add a new side data to a frame.
+ * Add a new side data to a src_frame.
  *
- * @param frame a frame to which the side data should be added
+ * @param frame a src_frame to which the side data should be added
  * @param type type of the added side data
  * @param size size of the side data
  *
@@ -897,15 +897,15 @@ AVFrameSideData *av_frame_new_side_data(AVFrame *frame,
                                         int size);
 
 /**
- * Add a new side data to a frame from an existing AVBufferRef
+ * Add a new side data to a src_frame from an existing AVBufferRef
  *
- * @param frame a frame to which the side data should be added
+ * @param frame a src_frame to which the side data should be added
  * @param type  the type of the added side data
  * @param buf   an AVBufferRef to add as side data. The ownership of
- *              the reference is transferred to the frame.
+ *              the reference is transferred to the src_frame.
  *
  * @return newly added side data on success, NULL on error. On failure
- *         the frame is unchanged and the AVBufferRef remains owned by
+ *         the src_frame is unchanged and the AVBufferRef remains owned by
  *         the caller.
  */
 AVFrameSideData *av_frame_new_side_data_from_buf(AVFrame *frame,
@@ -914,20 +914,20 @@ AVFrameSideData *av_frame_new_side_data_from_buf(AVFrame *frame,
 
 /**
  * @return a pointer to the side data of a given type on success, NULL if there
- * is no side data with such type in this frame.
+ * is no side data with such type in this src_frame.
  */
 AVFrameSideData *av_frame_get_side_data(const AVFrame *frame,
                                         enum AVFrameSideDataType type);
 
 /**
- * If side data of the supplied type exists in the frame, free it and remove it
- * from the frame.
+ * If side data of the supplied type exists in the src_frame, free it and remove it
+ * from the src_frame.
  */
 void av_frame_remove_side_data(AVFrame *frame, enum AVFrameSideDataType type);
 
 
 /**
- * Flags for frame cropping.
+ * Flags for src_frame cropping.
  */
 enum {
     /**
@@ -951,7 +951,7 @@ enum {
  * formats, the left/top cropping is ignored. The crop fields are set to 0 even
  * if the cropping was rounded or ignored.
  *
- * @param frame the frame which should be cropped
+ * @param frame the src_frame which should be cropped
  * @param flags Some combination of AV_FRAME_CROP_* flags, or 0.
  *
  * @return >= 0 on success, a negative AVERROR on error. If the cropping fields

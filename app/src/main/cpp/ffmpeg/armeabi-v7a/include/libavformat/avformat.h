@@ -582,7 +582,7 @@ typedef struct AVOutputFormat {
      *
      * See av_write_uncoded_frame() for details.
      *
-     * The library will free *frame afterwards, but the muxer can prevent it
+     * The library will free *src_frame afterwards, but the muxer can prevent it
      * by setting the pointer to NULL.
      */
     int (*write_uncoded_frame)(struct AVFormatContext *, int stream_index,
@@ -791,7 +791,7 @@ enum AVStreamParseType {
     AVSTREAM_PARSE_FULL,       /**< full parsing and repack */
     AVSTREAM_PARSE_HEADERS,    /**< Only parse headers, do not repack. */
     AVSTREAM_PARSE_TIMESTAMPS, /**< full parsing and interpolation of timestamps for frames not starting on a packet boundary */
-    AVSTREAM_PARSE_FULL_ONCE,  /**< full parsing and repack of the first frame only, only implemented for H.264 currently */
+    AVSTREAM_PARSE_FULL_ONCE,  /**< full parsing and repack of the first src_frame only, only implemented for H.264 currently */
     AVSTREAM_PARSE_FULL_RAW,   /**< full parsing and repack with timestamp and position generation by parser for raw
                                     this assumes that each packet in the file contains no demuxer level headers and
                                     just codec level data, otherwise position generation would fail */
@@ -807,7 +807,7 @@ typedef struct AVIndexEntry {
                                */
 #define AVINDEX_KEYFRAME 0x0001
 #define AVINDEX_DISCARD_FRAME  0x0002    /**
-                                          * Flag is used to indicate which frame should be discarded after decoding.
+                                          * Flag is used to indicate which src_frame should be discarded after decoding.
                                           */
     int flags:2;
     int size:30; //Yeah, trying to keep the size of this small to reduce memory requirements (it is 24 vs. 32 bytes due to possible 8-byte alignment).
@@ -832,7 +832,7 @@ typedef struct AVIndexEntry {
 #define AV_DISPOSITION_CLEAN_EFFECTS     0x0200  /**< stream without voice */
 /**
  * The stream is stored in the file as an attached picture/"cover art" (e.g.
- * APIC frame in ID3v2). The first (usually only) packet associated with it
+ * APIC src_frame in ID3v2). The first (usually only) packet associated with it
  * will be returned among the first few packets read from the file unless
  * seeking takes place. It can also be accessed at any time in
  * AVStream.attached_pic.
@@ -888,7 +888,7 @@ typedef struct AVStream {
 
     /**
      * This is the fundamental unit of time (in seconds) in terms
-     * of which frame timestamps are represented.
+     * of which src_frame timestamps are represented.
      *
      * decoding: set by libavformat
      * encoding: May be set by the caller before avformat_write_header() to
@@ -901,9 +901,9 @@ typedef struct AVStream {
     AVRational time_base;
 
     /**
-     * Decoding: pts of the first frame of the stream in presentation order, in stream time base.
+     * Decoding: pts of the first src_frame of the stream in presentation order, in stream time base.
      * Only set this if you are absolutely 100% sure that the value you set
-     * it to really is the pts of the first frame.
+     * it to really is the pts of the first src_frame.
      * This may be undefined (AV_NOPTS_VALUE).
      * @note The ASF header does NOT contain a correct start_time the ASF
      * demuxer must NOT set this.
@@ -1135,7 +1135,7 @@ typedef struct AVStream {
     int skip_to_keyframe;
 
     /**
-     * Number of samples to skip at the start of the frame decoded from the next packet.
+     * Number of samples to skip at the start of the src_frame decoded from the next packet.
      */
     int skip_samples;
 
@@ -1158,7 +1158,7 @@ typedef struct AVStream {
 
     /**
      * The sample after last sample that is intended to be discarded after
-     * first_discard_sample. Works on frame boundaries only. Used to prevent
+     * first_discard_sample. Works on src_frame boundaries only. Used to prevent
      * early EOF if the gapless info is broken (considered concatenated mp3s).
      */
     int64_t last_discard_sample;
@@ -1440,7 +1440,7 @@ typedef struct AVFormatContext {
     char *url;
 
     /**
-     * Position of the first frame of the component, in
+     * Position of the first src_frame of the component, in
      * AV_TIME_BASE fractional seconds. NEVER set this value directly:
      * It is deduced from the AVStream values.
      *
@@ -1478,7 +1478,7 @@ typedef struct AVFormatContext {
 #define AVFMT_FLAG_NONBLOCK     0x0004 ///< Do not block when reading packets from input.
 #define AVFMT_FLAG_IGNDTS       0x0008 ///< Ignore DTS on frames that contain both DTS & PTS
 #define AVFMT_FLAG_NOFILLIN     0x0010 ///< Do not infer any values from other values, just return what is stored in the container
-#define AVFMT_FLAG_NOPARSE      0x0020 ///< Do not use AVParsers, you also must set AVFMT_FLAG_NOFILLIN as the fillin code works on frames and no parsing -> no frames. Also seeking to frames can not work if parsing to find frame boundaries has been disabled
+#define AVFMT_FLAG_NOPARSE      0x0020 ///< Do not use AVParsers, you also must set AVFMT_FLAG_NOFILLIN as the fillin code works on frames and no parsing -> no frames. Also seeking to frames can not work if parsing to find src_frame boundaries has been disabled
 #define AVFMT_FLAG_NOBUFFER     0x0040 ///< Do not buffer frames when possible
 #define AVFMT_FLAG_CUSTOM_IO    0x0080 ///< The caller has supplied a custom AVIOContext, don't avio_close() it.
 #define AVFMT_FLAG_DISCARD_CORRUPT  0x0100 ///< Discard frames marked corrupted
@@ -2318,7 +2318,7 @@ int av_demuxer_open(AVFormatContext *ic);
  * Read packets of a media file to get stream information. This
  * is useful for file formats with no headers such as MPEG. This
  * function also computes the real framerate in case of MPEG-2 repeat
- * frame mode.
+ * src_frame mode.
  * The logical file position is not changed by this function;
  * examined packets may be buffered for later processing.
  *
@@ -2383,7 +2383,7 @@ int av_find_best_stream(AVFormatContext *ic,
                         int flags);
 
 /**
- * Return the next frame of a stream.
+ * Return the next src_frame of a stream.
  * This function returns what is stored in the file, and does not validate
  * that what is there are valid frames for the decoder. It will split what is
  * stored in the file into frames and return one for each call. It will not
@@ -2394,9 +2394,9 @@ int av_find_best_stream(AVFormatContext *ic,
  * av_read_frame() or until avformat_close_input(). Otherwise the packet
  * is valid indefinitely. In both cases the packet must be freed with
  * av_packet_unref when it is no longer needed. For video, the packet contains
- * exactly one frame. For audio, it contains an integer number of frames if each
- * frame has a known fixed size (e.g. PCM or ADPCM data). If the audio frames
- * have a variable size (e.g. MPEG audio), then it contains one frame.
+ * exactly one src_frame. For audio, it contains an integer number of frames if each
+ * src_frame has a known fixed size (e.g. PCM or ADPCM data). If the audio frames
+ * have a variable size (e.g. MPEG audio), then it contains one src_frame.
  *
  * pkt->pts, pkt->dts and pkt->duration are always set to correct
  * values in AVStream.time_base units (and guessed if the format cannot
@@ -2496,8 +2496,8 @@ void avformat_close_input(AVFormatContext **s);
 
 #define AVSEEK_FLAG_BACKWARD 1 ///< seek backward
 #define AVSEEK_FLAG_BYTE     2 ///< seeking based on position in bytes
-#define AVSEEK_FLAG_ANY      4 ///< seek to any frame, even non-keyframes
-#define AVSEEK_FLAG_FRAME    8 ///< seeking based on frame number
+#define AVSEEK_FLAG_ANY      4 ///< seek to any src_frame, even non-keyframes
+#define AVSEEK_FLAG_FRAME    8 ///< seeking based on src_frame number
 
 /**
  * @addtogroup lavf_encoding
@@ -2634,9 +2634,9 @@ int av_write_frame(AVFormatContext *s, AVPacket *pkt);
 int av_interleaved_write_frame(AVFormatContext *s, AVPacket *pkt);
 
 /**
- * Write an uncoded frame to an output media file.
+ * Write an uncoded src_frame to an output media file.
  *
- * The frame must be correctly interleaved according to the container
+ * The src_frame must be correctly interleaved according to the container
  * specification; if not, then av_interleaved_write_frame() must be used.
  *
  * See av_interleaved_write_frame() for details.
@@ -2645,7 +2645,7 @@ int av_write_uncoded_frame(AVFormatContext *s, int stream_index,
                            AVFrame *frame);
 
 /**
- * Write an uncoded frame to an output media file.
+ * Write an uncoded src_frame to an output media file.
  *
  * If the muxer supports it, this function makes it possible to write an AVFrame
  * structure directly, without encoding it into a packet.
@@ -2655,7 +2655,7 @@ int av_write_uncoded_frame(AVFormatContext *s, int stream_index,
  * To test whether it is possible to use it with a given muxer and stream,
  * use av_write_uncoded_frame_query().
  *
- * The caller gives up ownership of the frame and must not access it
+ * The caller gives up ownership of the src_frame and must not access it
  * afterwards.
  *
  * @return  >=0 for success, a negative code on error
@@ -2664,9 +2664,9 @@ int av_interleaved_write_uncoded_frame(AVFormatContext *s, int stream_index,
                                        AVFrame *frame);
 
 /**
- * Test whether a muxer supports uncoded frame.
+ * Test whether a muxer supports uncoded src_frame.
  *
- * @return  >=0 if an uncoded frame can be written to that muxer and stream,
+ * @return  >=0 if an uncoded src_frame can be written to that muxer and stream,
  *          <0 if not
  */
 int av_write_uncoded_frame_query(AVFormatContext *s, int stream_index);
@@ -2830,7 +2830,7 @@ int av_find_default_stream_index(AVFormatContext *s);
  * @param flags if AVSEEK_FLAG_BACKWARD then the returned index will correspond
  *                 to the timestamp which is <= the requested one, if backward
  *                 is 0, then it will be >=
- *              if AVSEEK_FLAG_ANY seek to any frame, only keyframes otherwise
+ *              if AVSEEK_FLAG_ANY seek to any src_frame, only keyframes otherwise
  * @return < 0 if no such timestamp could be found
  */
 int av_index_search_timestamp(AVStream *st, int64_t timestamp, int flags);
@@ -2899,7 +2899,7 @@ void av_dump_format(AVFormatContext *ic,
  * @param buf destination buffer
  * @param buf_size destination buffer size
  * @param path numbered sequence string
- * @param number frame number
+ * @param number src_frame number
  * @param flags AV_FRAME_FILENAME_FLAGS_*
  * @return 0 if OK, -1 on format error
  */
@@ -2992,31 +2992,31 @@ const struct AVCodecTag *avformat_get_mov_audio_tags(void);
  */
 
 /**
- * Guess the sample aspect ratio of a frame, based on both the stream and the
- * frame aspect ratio.
+ * Guess the sample aspect ratio of a src_frame, based on both the stream and the
+ * src_frame aspect ratio.
  *
- * Since the frame aspect ratio is set by the codec but the stream aspect ratio
+ * Since the src_frame aspect ratio is set by the codec but the stream aspect ratio
  * is set by the demuxer, these two may not be equal. This function tries to
- * return the value that you should use if you would like to display the frame.
+ * return the value that you should use if you would like to display the src_frame.
  *
  * Basic logic is to use the stream aspect ratio if it is set to something sane
- * otherwise use the frame aspect ratio. This way a container setting, which is
+ * otherwise use the src_frame aspect ratio. This way a container setting, which is
  * usually easy to modify can override the coded value in the frames.
  *
  * @param format the format context which the stream is part of
- * @param stream the stream which the frame is part of
- * @param frame the frame with the aspect ratio to be determined
+ * @param stream the stream which the src_frame is part of
+ * @param frame the src_frame with the aspect ratio to be determined
  * @return the guessed (valid) sample_aspect_ratio, 0/1 if no idea
  */
 AVRational av_guess_sample_aspect_ratio(AVFormatContext *format, AVStream *stream, AVFrame *frame);
 
 /**
- * Guess the frame rate, based on both the container and codec information.
+ * Guess the src_frame rate, based on both the container and codec information.
  *
  * @param ctx the format context which the stream is part of
- * @param stream the stream which the frame is part of
- * @param frame the frame for which the frame rate should be determined, may be NULL
- * @return the guessed (valid) frame rate, 0/1 if no idea
+ * @param stream the stream which the src_frame is part of
+ * @param frame the src_frame for which the src_frame rate should be determined, may be NULL
+ * @return the guessed (valid) src_frame rate, 0/1 if no idea
  */
 AVRational av_guess_frame_rate(AVFormatContext *ctx, AVStream *stream, AVFrame *frame);
 

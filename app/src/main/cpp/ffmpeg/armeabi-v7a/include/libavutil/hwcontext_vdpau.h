@@ -25,7 +25,7 @@
  * @file
  * An API-specific header for AV_HWDEVICE_TYPE_VDPAU.
  *
- * This API supports dynamic frame pools. AVHWFramesContext.pool must return
+ * This API supports dynamic src_frame pools. AVHWFramesContext.pool must return
  * AVBufferRefs whose data pointer is a VdpVideoSurface.
  */
 

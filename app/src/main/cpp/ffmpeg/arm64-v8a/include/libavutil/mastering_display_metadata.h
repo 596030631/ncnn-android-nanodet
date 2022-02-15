@@ -78,9 +78,9 @@ typedef struct AVMasteringDisplayMetadata {
 AVMasteringDisplayMetadata *av_mastering_display_metadata_alloc(void);
 
 /**
- * Allocate a complete AVMasteringDisplayMetadata and add it to the frame.
+ * Allocate a complete AVMasteringDisplayMetadata and add it to the src_frame.
  *
- * @param frame The frame which side data is added to.
+ * @param frame The src_frame which side data is added to.
  *
  * @return The AVMasteringDisplayMetadata structure to be filled by caller.
  */
@@ -102,7 +102,7 @@ typedef struct AVContentLightMetadata {
     unsigned MaxCLL;
 
     /**
-     * Max average light level per frame (cd/m^2).
+     * Max average light level per src_frame (cd/m^2).
      */
     unsigned MaxFALL;
 } AVContentLightMetadata;
@@ -117,9 +117,9 @@ typedef struct AVContentLightMetadata {
 AVContentLightMetadata *av_content_light_metadata_alloc(size_t *size);
 
 /**
- * Allocate a complete AVContentLightMetadata and add it to the frame.
+ * Allocate a complete AVContentLightMetadata and add it to the src_frame.
  *
- * @param frame The frame which side data is added to.
+ * @param frame The src_frame which side data is added to.
  *
  * @return The AVContentLightMetadata structure to be filled by caller.
  */

@@ -33,39 +33,39 @@
 #define AV_TIMECODE_STR_SIZE 23
 
 enum AVTimecodeFlag {
-    AV_TIMECODE_FLAG_DROPFRAME      = 1<<0, ///< timecode is drop frame
+    AV_TIMECODE_FLAG_DROPFRAME      = 1<<0, ///< timecode is drop src_frame
     AV_TIMECODE_FLAG_24HOURSMAX     = 1<<1, ///< timecode wraps after 24 hours
     AV_TIMECODE_FLAG_ALLOWNEGATIVE  = 1<<2, ///< negative time values are allowed
 };
 
 typedef struct {
-    int start;          ///< timecode frame start (first base frame number)
-    uint32_t flags;     ///< flags such as drop frame, +24 hours support, ...
-    AVRational rate;    ///< frame rate in rational form
-    unsigned fps;       ///< frame per second; must be consistent with the rate field
+    int start;          ///< timecode src_frame start (first base src_frame number)
+    uint32_t flags;     ///< flags such as drop src_frame, +24 hours support, ...
+    AVRational rate;    ///< src_frame rate in rational form
+    unsigned fps;       ///< src_frame per second; must be consistent with the rate field
 } AVTimecode;
 
 /**
- * Adjust frame number for NTSC drop frame time code.
+ * Adjust src_frame number for NTSC drop src_frame time code.
  *
- * @param framenum frame number to adjust
- * @param fps      frame per second, 30 or 60
- * @return         adjusted frame number
+ * @param framenum src_frame number to adjust
+ * @param fps      src_frame per second, 30 or 60
+ * @return         adjusted src_frame number
  * @warning        adjustment is only valid in NTSC 29.97 and 59.94
  */
 int av_timecode_adjust_ntsc_framenum2(int framenum, int fps);
 
 /**
- * Convert frame number to SMPTE 12M binary representation.
+ * Convert src_frame number to SMPTE 12M binary representation.
  *
  * @param tc       timecode data correctly initialized
- * @param framenum frame number
+ * @param framenum src_frame number
  * @return         the SMPTE binary representation
  *
  * @note Frame number adjustment is automatically done in case of drop timecode,
  *       you do NOT have to call av_timecode_adjust_ntsc_framenum2().
- * @note The frame number is relative to tc->start.
- * @note Color frame (CF), binary group flags (BGF) and biphase mark polarity
+ * @note The src_frame number is relative to tc->start.
+ * @note Color src_frame (CF), binary group flags (BGF) and biphase mark polarity
  *       correction (PC) bits are set to zero.
  */
 uint32_t av_timecode_get_smpte_from_framenum(const AVTimecode *tc, int framenum);
@@ -75,12 +75,12 @@ uint32_t av_timecode_get_smpte_from_framenum(const AVTimecode *tc, int framenum)
  *
  * @param buf      destination buffer, must be at least AV_TIMECODE_STR_SIZE long
  * @param tc       timecode data correctly initialized
- * @param framenum frame number
+ * @param framenum src_frame number
  * @return         the buf parameter
  *
  * @note Timecode representation can be a negative timecode and have more than
  *       24 hours, but will only be honored if the flags are correctly set.
- * @note The frame number is relative to tc->start.
+ * @note The src_frame number is relative to tc->start.
  */
 char *av_timecode_make_string(const AVTimecode *tc, char *buf, int framenum);
 
@@ -110,10 +110,10 @@ char *av_timecode_make_mpeg_tc_string(char *buf, uint32_t tc25bit);
  * @param log_ctx     a pointer to an arbitrary struct of which the first field
  *                    is a pointer to an AVClass struct (used for av_log)
  * @param tc          pointer to an allocated AVTimecode
- * @param rate        frame rate in rational form
- * @param flags       miscellaneous flags such as drop frame, +24 hours, ...
+ * @param rate        src_frame rate in rational form
+ * @param flags       miscellaneous flags such as drop src_frame, +24 hours, ...
  *                    (see AVTimecodeFlag)
- * @param frame_start the first frame number
+ * @param frame_start the first src_frame number
  * @return            0 on success, AVERROR otherwise
  */
 int av_timecode_init(AVTimecode *tc, AVRational rate, int flags, int frame_start, void *log_ctx);
@@ -124,14 +124,14 @@ int av_timecode_init(AVTimecode *tc, AVRational rate, int flags, int frame_start
  * @param log_ctx a pointer to an arbitrary struct of which the first field is a
  *                pointer to an AVClass struct (used for av_log).
  * @param tc      pointer to an allocated AVTimecode
- * @param rate    frame rate in rational form
- * @param str     timecode string which will determine the frame start
+ * @param rate    src_frame rate in rational form
+ * @param str     timecode string which will determine the src_frame start
  * @return        0 on success, AVERROR otherwise
  */
 int av_timecode_init_from_string(AVTimecode *tc, AVRational rate, const char *str, void *log_ctx);
 
 /**
- * Check if the timecode feature is available for the given frame rate
+ * Check if the timecode feature is available for the given src_frame rate
  *
  * @return 0 if supported, <0 otherwise
  */

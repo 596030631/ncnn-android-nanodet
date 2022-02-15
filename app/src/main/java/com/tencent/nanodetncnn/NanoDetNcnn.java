@@ -33,8 +33,6 @@ public abstract class NanoDetNcnn
     public native void stop();
     public native void close();
 
-    public native void scalingVideo();
-
     static {
         System.loadLibrary("nanodetncnn");
     }

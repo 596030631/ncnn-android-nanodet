@@ -298,24 +298,24 @@ struct SwsContext *sws_getCachedContext(struct SwsContext *context,
                                         SwsFilter *dstFilter, const double *param);
 
 /**
- * Convert an 8-bit paletted frame into a frame with a color depth of 32 bits.
+ * Convert an 8-bit paletted src_frame into a src_frame with a color depth of 32 bits.
  *
- * The output frame will have the same packed format as the palette.
+ * The output src_frame will have the same packed format as the palette.
  *
- * @param src        source frame buffer
- * @param dst        destination frame buffer
+ * @param src        source src_frame buffer
+ * @param dst        destination src_frame buffer
  * @param num_pixels number of pixels to convert
  * @param palette    array with [256] entries, which must match color arrangement (RGB or BGR) of src
  */
 void sws_convertPalette8ToPacked32(const uint8_t *src, uint8_t *dst, int num_pixels, const uint8_t *palette);
 
 /**
- * Convert an 8-bit paletted frame into a frame with a color depth of 24 bits.
+ * Convert an 8-bit paletted src_frame into a src_frame with a color depth of 24 bits.
  *
- * With the palette format "ABCD", the destination frame ends up with the format "ABC".
+ * With the palette format "ABCD", the destination src_frame ends up with the format "ABC".
  *
- * @param src        source frame buffer
- * @param dst        destination frame buffer
+ * @param src        source src_frame buffer
+ * @param dst        destination src_frame buffer
  * @param num_pixels number of pixels to convert
  * @param palette    array with [256] entries, which must match color arrangement (RGB or BGR) of src
  */

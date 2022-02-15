@@ -34,10 +34,10 @@
  */
 
 /**
- * Get a frame with filtered data from sink and put it in frame.
+ * Get a src_frame with filtered data from sink and put it in src_frame.
  *
  * @param ctx    pointer to a buffersink or abuffersink filter context.
- * @param frame  pointer to an allocated frame that will be filled with data.
+ * @param frame  pointer to an allocated src_frame that will be filled with data.
  *               The data must be freed using av_frame_unref() / av_frame_free()
  * @param flags  a combination of AV_BUFFERSINK_FLAG_* flags
  *
@@ -53,9 +53,9 @@ int av_buffersink_get_frame_flags(AVFilterContext *ctx, AVFrame *frame, int flag
 #define AV_BUFFERSINK_FLAG_PEEK 1
 
 /**
- * Tell av_buffersink_get_buffer_ref() not to request a frame from its input.
- * If a frame is already buffered, it is read (and removed from the buffer),
- * but if no frame is present, return AVERROR(EAGAIN).
+ * Tell av_buffersink_get_buffer_ref() not to request a src_frame from its input.
+ * If a src_frame is already buffered, it is read (and removed from the buffer),
+ * but if no src_frame is present, return AVERROR(EAGAIN).
  */
 #define AV_BUFFERSINK_FLAG_NO_REQUEST 2
 
@@ -92,7 +92,7 @@ typedef struct AVABufferSinkParams {
 AVABufferSinkParams *av_abuffersink_params_alloc(void);
 
 /**
- * Set the frame size for an audio buffer sink.
+ * Set the src_frame size for an audio buffer sink.
  *
  * All calls to av_buffersink_get_buffer_ref will return a buffer with
  * exactly the specified number of samples, or AVERROR(EAGAIN) if there is
@@ -124,14 +124,14 @@ AVBufferRef *    av_buffersink_get_hw_frames_ctx       (const AVFilterContext *c
 /** @} */
 
 /**
- * Get a frame with filtered data from sink and put it in frame.
+ * Get a src_frame with filtered data from sink and put it in src_frame.
  *
  * @param ctx pointer to a context of a buffersink or abuffersink AVFilter.
- * @param frame pointer to an allocated frame that will be filled with data.
+ * @param frame pointer to an allocated src_frame that will be filled with data.
  *              The data must be freed using av_frame_unref() / av_frame_free()
  *
  * @return
- *         - >= 0 if a frame was successfully returned.
+ *         - >= 0 if a src_frame was successfully returned.
  *         - AVERROR(EAGAIN) if no frames are available at this point; more
  *           input frames must be added to the filtergraph to get more output.
  *         - AVERROR_EOF if there will be no more output frames on this sink.
@@ -145,9 +145,9 @@ int av_buffersink_get_frame(AVFilterContext *ctx, AVFrame *frame);
  * av_buffersink_get_frame(), because it copies the data around.
  *
  * @param ctx pointer to a context of the abuffersink AVFilter.
- * @param frame pointer to an allocated frame that will be filled with data.
+ * @param frame pointer to an allocated src_frame that will be filled with data.
  *              The data must be freed using av_frame_unref() / av_frame_free()
- *              frame will contain exactly nb_samples audio samples, except at
+ *              src_frame will contain exactly nb_samples audio samples, except at
  *              the end of stream, when it can contain less than nb_samples.
  *
  * @return The return codes have the same meaning as for

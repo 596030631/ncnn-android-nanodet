@@ -40,7 +40,7 @@
 /**
  * @addtogroup lavu_video_spherical
  * A spherical video file contains surfaces that need to be mapped onto a
- * sphere. Depending on how the frame was converted, a different distortion
+ * sphere. Depending on how the src_frame was converted, a different distortion
  * transformation or surface recomposition function needs to be applied before
  * the video should be mapped and displayed.
  */
@@ -56,7 +56,7 @@ enum AVSphericalProjection {
     AV_SPHERICAL_EQUIRECTANGULAR,
 
     /**
-     * Video frame is split into 6 faces of a cube, and arranged on a
+     * Video src_frame is split into 6 faces of a cube, and arranged on a
      * 3x2 layout. Faces are oriented upwards for the front, left, right,
      * and back faces. The up face is oriented so the top of the face is
      * forwards and the down face is oriented so the top of the face is
@@ -89,7 +89,7 @@ typedef struct AVSphericalMapping {
      * @name Initial orientation
      * @{
      * There fields describe additional rotations applied to the sphere after
-     * the video frame is mapped onto it. The sphere is rotated around the
+     * the video src_frame is mapped onto it. The sphere is rotated around the
      * viewer, who remains stationary. The order of transformation is always
      * yaw, followed by pitch, and finally by roll.
      *
@@ -152,7 +152,7 @@ typedef struct AVSphericalMapping {
      * @endcode
      *
      * If needed, the original video surface dimensions can be derived
-     * by adding the current stream or frame size to the related bounds,
+     * by adding the current stream or src_frame size to the related bounds,
      * like in the following example:
      *
      * @code{c}
@@ -195,8 +195,8 @@ AVSphericalMapping *av_spherical_alloc(size_t *size);
  * from 0.32 fixed point to pixels.
  *
  * @param map    The AVSphericalVideo map to read bound values from.
- * @param width  Width of the current frame or stream.
- * @param height Height of the current frame or stream.
+ * @param width  Width of the current src_frame or stream.
+ * @param height Height of the current src_frame or stream.
  * @param left   Pixels from the left edge.
  * @param top    Pixels from the top edge.
  * @param right  Pixels from the right edge.
